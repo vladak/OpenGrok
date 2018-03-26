@@ -143,5 +143,22 @@ public class NormalMessageTest {
         Assert.assertNotNull(env.getMessages("main"));
         Assert.assertEquals(1, env.getMessages("main").size());
     }
-
+    
+    /**
+     * Convert Normal message to JSON and back, make sure this operation
+     * is idempotent.
+     */
+    @Test
+    public void testJSON() {
+        Message m1 = new NormalMessage();
+        m1.setText("foo");
+        m1.addTag("tag1");
+        m1.addTag("tag2");
+        
+        String json = m1.toJson();
+        Message m2 = Message.fromJson(json);
+        Assert.assertNotNull(m2);
+        Assert.assertTrue(m2 instanceof NormalMessage);
+        Assert.assertTrue(m1.equals(m2));
+    }
 }

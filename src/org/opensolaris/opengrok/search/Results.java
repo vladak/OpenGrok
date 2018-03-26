@@ -56,6 +56,7 @@ import org.opensolaris.opengrok.configuration.RuntimeEnvironment;
 import org.opensolaris.opengrok.history.HistoryException;
 import org.opensolaris.opengrok.logger.LoggerFactory;
 import org.opensolaris.opengrok.util.IOUtils;
+import static org.opensolaris.opengrok.web.JSONutil.messagesToJson;
 import org.opensolaris.opengrok.web.Prefix;
 import org.opensolaris.opengrok.web.SearchHelper;
 import org.opensolaris.opengrok.web.Util;
@@ -178,7 +179,7 @@ public final class Results {
             }
             JSONArray messages;
             if ((p = Project.getProject(parent)) != null
-                    && (messages = Util.messagesToJson(p,
+                    && (messages = messagesToJson(p,
                             RuntimeEnvironment.MESSAGES_MAIN_PAGE_TAG
                     )).size() > 0) {
                 out.write(" <a ");

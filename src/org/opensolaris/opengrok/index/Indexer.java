@@ -56,6 +56,7 @@ import org.opensolaris.opengrok.configuration.LuceneLockName;
 import org.opensolaris.opengrok.configuration.Project;
 import org.opensolaris.opengrok.configuration.RuntimeEnvironment;
 import org.opensolaris.opengrok.configuration.messages.Message;
+import org.opensolaris.opengrok.configuration.messages.MessageFactory;
 import org.opensolaris.opengrok.history.HistoryException;
 import org.opensolaris.opengrok.history.HistoryGuru;
 import org.opensolaris.opengrok.history.Repository;
@@ -261,7 +262,7 @@ public final class Indexer {
             // using a message so that the 'project/indexed' messages
             // emitted during indexing do not cause validation error.
             if (addProjects && host != null && port > 0) {
-                Message m = Message.createMessage("config");
+                Message m = MessageFactory.createMessage("config");
                 m.addTag("set");
                 m.setText("projectsEnabled = true");
                 try {

@@ -28,6 +28,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 import org.json.simple.parser.ParseException;
 import org.opensolaris.opengrok.configuration.RuntimeEnvironment;
+import static org.opensolaris.opengrok.web.JSONutil.statisticToJson;
 import org.opensolaris.opengrok.web.Statistics;
 import org.opensolaris.opengrok.web.Util;
 
@@ -39,6 +40,10 @@ public class StatsMessage extends Message {
 
     static final List<String> ALLOWED_OPTIONS = Arrays.asList(new String[]{"get", "reload", "clean"});
 
+    public StatsMessage() {
+        this.className = "Stats";
+    }
+    
     @Override
     protected byte[] applyMessage(RuntimeEnvironment env) throws IOException, ParseException {
         if (getText().equalsIgnoreCase("reload")) {
@@ -46,7 +51,7 @@ public class StatsMessage extends Message {
         } else if (getText().equalsIgnoreCase("clean")) {
             env.setStatistics(new Statistics());
         }
-        return Util.statisticToJson(env.getStatistics()).toJSONString().getBytes();
+        return statisticToJson(env.getStatistics()).toJSONString().getBytes();
     }
 
     @Override

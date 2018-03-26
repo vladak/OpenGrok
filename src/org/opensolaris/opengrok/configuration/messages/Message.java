@@ -18,10 +18,14 @@
  */
 
 /*
- * Copyright (c) 2016, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2018, Oracle and/or its affiliates. All rights reserved.
  */
 package org.opensolaris.opengrok.configuration.messages;
 
+import com.google.gson.Gson;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import java.beans.XMLDecoder;
 import java.beans.XMLEncoder;
 import java.io.BufferedInputStream;
@@ -47,12 +51,10 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.opensolaris.opengrok.configuration.RuntimeEnvironment;
 import org.opensolaris.opengrok.logger.LoggerFactory;
+import static org.opensolaris.opengrok.util.DateUtils.dateEqualsSeconds;
 import org.opensolaris.opengrok.util.XmlEofOutputStream;
 
 /**
- * If you extend this file, don't forget to add an information into the root
- * README.
- *
  * @author Kryštof Tulinger
  */
 public abstract class Message implements Comparable<Message> {
@@ -68,7 +70,7 @@ public abstract class Message implements Comparable<Message> {
     protected static final long DEFAULT_EXPIRATION = 10 * MINUTE;
 
     protected String text;
-    protected String className;
+    protected String className; // Note: fromJson() depends on the name of this variable.
     protected Set<String> tags = new TreeSet<>();
     protected Date created = new Date();
     protected Date expiration = new Date(System.currentTimeMillis() + DEFAULT_EXPIRATION);
@@ -105,26 +107,6 @@ public abstract class Message implements Comparable<Message> {
         if (getCreated() == null) {
             throw new Exception("The message must contain a creation date.");
         }
-    }
-
-    /**
-     * Factory method for particular message types.
-     *
-     * @param type the message type
-     * @return specific message instance for the given type or null
-     */
-    public static Message createMessage(String type) {
-        String classname = Message.class.getPackage().getName();
-        classname += "." + type.substring(0, 1).toUpperCase(Locale.getDefault());
-        classname += type.substring(1) + "Message";
-
-        try {
-            Class<?> concreteClass = Class.forName(classname);
-            return (Message) concreteClass.getDeclaredConstructor().newInstance();
-        } catch (Throwable ex) {
-            LOGGER.log(Level.WARNING, "Couldn't create message object of type \"{0}\".", type);
-        }
-        return null;
     }
 
     public String getText() {
@@ -260,10 +242,13 @@ public abstract class Message implements Comparable<Message> {
         }
         final Message other = (Message) obj;
 
-        if (!Objects.equals(this.created, other.created)) {
+        // The serialization is made with granularity of seconds. To make the
+        // serialization/deserialization idempotent, string representation
+        // with granularity in seconds in used.
+        if (!dateEqualsSeconds(this.created, other.created)) {
             return false;
         }
-        if (!Objects.equals(this.expiration, other.expiration)) {
+        if (!dateEqualsSeconds(this.expiration, other.expiration)) {
             return false;
         }
         if (!Objects.equals(this.text, other.text)) {
@@ -272,6 +257,7 @@ public abstract class Message implements Comparable<Message> {
         if (!Objects.equals(this.tags, other.tags)) {
             return false;
         }
+        
         return true;
     }
 
@@ -361,7 +347,37 @@ public abstract class Message implements Comparable<Message> {
 
         return conf;
     }
+    
+    /**
+     * Convert this object into JSONObject.
+     *
+     * @return the JSON object
+     */
+    public String toJson() {
+        Gson gson = new Gson();
+        return (gson.toJson(this));
+    }
+    
+    /**
+     * Convert JSON object to Message object.
+     * @param obj JSON object
+     * @return message object
+     */
+    public static Message fromJson(String obj) {
+        JsonParser jp = new JsonParser();
+        JsonElement je = jp.parse(obj);
+        if (!je.isJsonObject()) {
+            return (null);
+        }
+        JsonObject jo = (JsonObject) je;
+        
+        Gson gson = new Gson();
+        Message m = (Message) gson.fromJson(obj,
+                MessageFactory.getMessageClass(jo.get("className").getAsString()));
 
+        return (m);
+    }
+    
     /**
      * Decode the return code from the remote server.
      *

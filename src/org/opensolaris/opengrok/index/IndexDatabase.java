@@ -83,6 +83,7 @@ import org.opensolaris.opengrok.analysis.FileAnalyzer.Genre;
 import org.opensolaris.opengrok.configuration.Project;
 import org.opensolaris.opengrok.configuration.RuntimeEnvironment;
 import org.opensolaris.opengrok.configuration.messages.Message;
+import org.opensolaris.opengrok.configuration.messages.MessageFactory;
 import org.opensolaris.opengrok.history.HistoryException;
 import org.opensolaris.opengrok.history.HistoryGuru;
 import org.opensolaris.opengrok.logger.LoggerFactory;
@@ -346,7 +347,7 @@ public class IndexDatabase {
         // refresh.
         if (project != null) {
             if (env.getConfigHost() != null && env.getConfigPort() > 0) {
-                Message m = Message.createMessage("project");
+                Message m = MessageFactory.createMessage("project");
                 m.addTag(project.getName());
                 m.setText("indexed");
                 try {

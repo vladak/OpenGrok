@@ -126,7 +126,7 @@ public final class Messages {
             port = 2424;
         }
 
-        Message m = Message.createMessage(type);
+        Message m = MessageFactory.createMessage(type);
 
         if (m == null) {
             System.err.println("Unknown message type " + type);

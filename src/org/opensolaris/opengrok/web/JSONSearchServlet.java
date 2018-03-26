@@ -159,9 +159,7 @@ public class JSONSearchServlet extends HttpServlet {
 
             result.put(ATTRIBUTE_DURATION, duration);
             result.put(ATTRIBUTE_RESULT_COUNT, results.size());
-
             result.put(ATTRIBUTE_RESULTS, resultsArray);
-
 
             resp.setContentType("application/json");
             resp.getWriter().write(result.toString());
@@ -178,7 +176,7 @@ public class JSONSearchServlet extends HttpServlet {
      * @param paramName The name of the parameter on the request.
      * @param defaultValue The default value to use when no value is
      *                     provided or parsing fails.
-     * @return The integer value of the request param if present or the
+     * @return The integer value of the request parameter if present or the
      *         defaultValue if none is present.
      */
     private static Integer getIntParameter(final HttpServletRequest request,

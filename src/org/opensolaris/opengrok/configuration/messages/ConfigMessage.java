@@ -29,7 +29,6 @@ import java.util.TreeSet;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.opensolaris.opengrok.configuration.RuntimeEnvironment;
-import org.opensolaris.opengrok.util.BooleanUtil;
 import org.opensolaris.opengrok.util.ClassUtil;
 
 
@@ -41,6 +40,10 @@ import org.opensolaris.opengrok.util.ClassUtil;
  */
 public class ConfigMessage extends Message {
 
+    public ConfigMessage() {
+        this.className = "Config";
+    }
+    
     /**
      * Pattern describes the java variable name and the assigned value.
      * Examples:

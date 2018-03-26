@@ -100,8 +100,11 @@ import static java.nio.file.StandardWatchEventKinds.ENTRY_CREATE;
 import static java.nio.file.StandardWatchEventKinds.ENTRY_DELETE;
 import static java.nio.file.StandardWatchEventKinds.ENTRY_MODIFY;
 import static org.opensolaris.opengrok.configuration.Configuration.makeXMLStringAsConfiguration;
+import org.opensolaris.opengrok.configuration.messages.MessageFactory;
 import org.opensolaris.opengrok.util.ForbiddenSymlinkException;
 import org.opensolaris.opengrok.util.PathUtils;
+import static org.opensolaris.opengrok.web.JSONutil.jsonToStatistics;
+import static org.opensolaris.opengrok.web.JSONutil.statisticToJson;
 
 /**
  * The RuntimeEnvironment class is used as a placeholder for the current
@@ -1317,7 +1320,7 @@ public final class RuntimeEnvironment {
      * @throws IOException if an error occurs
      */
     public void writeConfiguration(String host, int port) throws IOException {
-        Message m = Message.createMessage("config");
+        Message m = MessageFactory.createMessage("config");
         m.addTag("setconf");
         m.addTag("reindex");
         m.setText(configuration.getXMLRepresentationAsString());
@@ -1347,7 +1350,7 @@ public final class RuntimeEnvironment {
      * @throws IOException if an error occurs
      */
     public void signalTorefreshSearcherManagers(List<String> subFiles, String host, int port) throws IOException {
-        Message m = Message.createMessage("refresh");
+        Message m = MessageFactory.createMessage("refresh");
         for (String proj : subFiles) {
             // subFile entries start with path separator so get basename
             // to convert them to project names.
@@ -1668,7 +1671,7 @@ public final class RuntimeEnvironment {
      * @throws IOException
      */
     public void saveStatistics(OutputStream out) throws IOException {
-        out.write(Util.statisticToJson(getStatistics()).toJSONString().getBytes());
+        out.write(statisticToJson(getStatistics()).toJSONString().getBytes());
     }
 
     /**
@@ -1703,14 +1706,14 @@ public final class RuntimeEnvironment {
     /**
      * Load statistics from an input stream.
      *
-     * @param in the file with json
+     * @param in the file with JSON
      * @throws IOException
      * @throws ParseException
      */
     public void loadStatistics(InputStream in) throws IOException, ParseException {
         try (InputStreamReader iReader = new InputStreamReader(in)) {
             JSONParser jsonParser = new JSONParser();
-            setStatistics(Util.jsonToStatistics((JSONObject) jsonParser.parse(iReader)));
+            setStatistics(jsonToStatistics((JSONObject) jsonParser.parse(iReader)));
         }
     }
 

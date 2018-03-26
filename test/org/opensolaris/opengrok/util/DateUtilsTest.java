@@ -17,34 +17,27 @@
  * CDDL HEADER END
  */
 
- /*
- * Copyright (c) 2016, 2017, Oracle and/or its affiliates. All rights reserved.
+/*
+ * Copyright (c) 2018, Oracle and/or its affiliates. All rights reserved.
  */
-package org.opensolaris.opengrok.configuration.messages;
+package org.opensolaris.opengrok.util;
 
-import org.opensolaris.opengrok.configuration.RuntimeEnvironment;
+import java.util.Date;
+import junit.framework.Assert;
+import org.junit.Test;
+import static org.opensolaris.opengrok.util.DateUtils.dateEqualsSeconds;
 
 /**
- * @author Kryštof Tulinger
+ * tests for date/time utilities
+ * 
+ * @author Vladimir Kotal
  */
-public class AbortMessage extends Message {
-
-    public AbortMessage() {
-        this.className = "Abort";
+public class DateUtilsTest {
+    @Test
+    public void testDateEqualsSeconds() {
+        Date date1 = new Date(1521558870000L);
+        Date date2 = new Date(1521558870001L);
+        
+        Assert.assertTrue(dateEqualsSeconds(date1, date2));
     }
-    
-    @Override
-    protected byte[] applyMessage(RuntimeEnvironment env) {
-        env.removeAnyMessage(tags);
-        return null;
-    }
-
-    @Override
-    public void validate() throws Exception {
-        if (getTags().isEmpty()) {
-            getTags().add(RuntimeEnvironment.MESSAGES_MAIN_PAGE_TAG);
-        }
-        super.validate();
-    }
-
 }

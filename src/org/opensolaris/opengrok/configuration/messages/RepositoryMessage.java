@@ -38,6 +38,10 @@ import org.opensolaris.opengrok.history.RepositoryInfo;
  */
 public class RepositoryMessage extends Message {
     
+    public RepositoryMessage() {
+        this.className = "Repository";
+    }
+    
     @Override
     protected byte[] applyMessage(RuntimeEnvironment env) throws Exception {
         String ret = null;

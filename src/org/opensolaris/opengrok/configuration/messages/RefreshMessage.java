@@ -33,6 +33,11 @@ import org.opensolaris.opengrok.configuration.RuntimeEnvironment;
  * @author Vladimir Kotal
  */
 public class RefreshMessage extends Message {
+    
+    public RefreshMessage() {
+        this.className = "Refresh";
+    }
+    
     @Override
     public byte[] applyMessage(RuntimeEnvironment env) throws IOException {
         env.maybeRefreshIndexSearchers(this.getTags());

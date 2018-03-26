@@ -69,8 +69,12 @@
         </init-param>
     </servlet>
     <servlet>
-        <servlet-name>json</servlet-name>
+        <servlet-name>api-search</servlet-name>
         <servlet-class>org.opensolaris.opengrok.web.JSONSearchServlet</servlet-class>
+    </servlet>
+    <servlet>
+        <servlet-name>api-message</servlet-name>
+        <servlet-class>org.opensolaris.opengrok.web.MessageAPI</servlet-class>
     </servlet>
     <servlet>
         <display-name>Source History</display-name>
@@ -172,9 +176,20 @@
         <url-pattern>/search</url-pattern>
         <!-- SEARCH_P -->
     </servlet-mapping>
+    <!--
+    XXX The api-doc servlet should generate API documentation
     <servlet-mapping>
-        <servlet-name>json</servlet-name>
-        <url-pattern>/json</url-pattern>
+        <servlet-name>api-doc</servlet-name>
+        <url-pattern>/api</url-pattern>
+    </servlet-mapping>
+    -->
+    <servlet-mapping>
+        <servlet-name>api-search</servlet-name>
+        <url-pattern>/api/search</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>api-message</servlet-name>
+        <url-pattern>/api/message</url-pattern>
     </servlet-mapping>
     <servlet-mapping>
         <servlet-name>opensearch</servlet-name>

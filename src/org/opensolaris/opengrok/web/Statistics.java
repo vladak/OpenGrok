@@ -29,6 +29,8 @@ import java.util.stream.Collectors;
 import java.util.stream.LongStream;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
+import static org.opensolaris.opengrok.web.JSONutil.convertArrayToJSONArray;
+import static org.opensolaris.opengrok.web.JSONutil.convertJSONArrayToArray;
 
 /**
  * Framework for statistics gathering. So far used only by the webapp.
@@ -275,7 +277,7 @@ public class Statistics {
     /**
      * Convert this statistics object into JSONObject.
      *
-     * @return the json object
+     * @return the JSON object
      */
     public JSONObject toJson() {
         return toJson(this);
@@ -332,7 +334,7 @@ public class Statistics {
      * Convert statistics object into JSONObject.
      *
      * @param stats the statistics object
-     * @return the json object or empty json object if there was no request
+     * @return the JSON object or empty JSON object if there was no request
      */
     @SuppressWarnings("unchecked")
     public static JSONObject toJson(Statistics stats) {
@@ -354,35 +356,6 @@ public class Statistics {
         output.put(STATISTIC_DAY_HISTOGRAM, convertArrayToJSONArray(stats.getDayHistogram()));
         output.put(STATISTIC_MONTH_HISTOGRAM, convertArrayToJSONArray(stats.getMonthHistogram()));
         return output;
-    }
-
-    /**
-     * Converts an array into json array.
-     *
-     * @param array the input array
-     * @return the output json array
-     */
-    @SuppressWarnings("unchecked")
-    private static JSONArray convertArrayToJSONArray(long[] array) {
-        JSONArray ret = new JSONArray();
-        for (long o : array) {
-            ret.add(o);
-        }
-        return ret;
-    }
-
-    /**
-     * Converts an json array into an array.
-     *
-     * @param dest the input json array
-     * @param target the output array
-     * @return target
-     */
-    private static long[] convertJSONArrayToArray(JSONArray dest, long[] target) {
-        for (int i = 0; i < target.length && i < dest.size(); i++) {
-            target[i] = (long) dest.get(i);
-        }
-        return target;
     }
 
     @Override

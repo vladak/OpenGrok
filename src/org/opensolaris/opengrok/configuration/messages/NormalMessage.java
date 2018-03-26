@@ -17,8 +17,8 @@
  * CDDL HEADER END
  */
 
- /*
- * Copyright (c) 2016, 2017, Oracle and/or its affiliates. All rights reserved.
+/*
+ * Copyright (c) 2016, 2018, Oracle and/or its affiliates. All rights reserved.
  */
 package org.opensolaris.opengrok.configuration.messages;
 
@@ -29,6 +29,10 @@ import org.opensolaris.opengrok.configuration.RuntimeEnvironment;
  */
 public class NormalMessage extends Message {
 
+    public NormalMessage() {
+        this.className = "Normal";
+    }
+    
     @Override
     protected byte[] applyMessage(RuntimeEnvironment env) {
         env.addMessage(this);
@@ -47,7 +51,7 @@ public class NormalMessage extends Message {
             getTags().add(RuntimeEnvironment.MESSAGES_MAIN_PAGE_TAG);
         }
         if (getClassName() == null) {
-            setClassName("info");
+            setClassName("Normal");
         }
         super.validate();
     }

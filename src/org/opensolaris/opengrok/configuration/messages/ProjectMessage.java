@@ -56,6 +56,10 @@ public class ProjectMessage extends Message {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ProjectMessage.class);
 
+    public ProjectMessage() {
+        this.className = "Project";
+    }
+    
     /**
      * Perform additional validation. This cannot be done in validate()
      * because it does not have access to the currently used RuntimeEnvironment.
