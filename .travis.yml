@@ -51,3 +51,32 @@ addons:
       branch_pattern: "coverity_scan"
       #    build_command_prepend: "mvn clean"
       build_command: "mvn -DskipTests=true -Dmaven.javadoc.skip=false -B -V compile"
+
+deploy:
+  # Pre-release
+  - provider: releases
+    script:
+    - echo "$TRAVIS_TAG"
+    - echo "$TRAVIS_BRANCH"
+    prerelease: true
+    api_key:
+      secure: XXX
+    file: dist/opengrok-$TRAVIS_TAG.tar.gz
+    skip_cleanup: true
+    on:
+      repo: OpenGrok/OpenGrok
+      tags: true
+      condition: "$TRAVIS_TAG =~ rc[0-9]+$"
+  # Full release
+  - provider: releases
+    script:
+    - echo "$TRAVIS_TAG"
+    - echo "$TRAVIS_BRANCH"
+    api_key:
+      secure: XXX
+    file: dist/opengrok-$TRAVIS_TAG.tar.gz
+    skip_cleanup: true
+    on:
+      repo: OpenGrok/OpenGrok
+      tags: true
+      condition: "! $TRAVIS_TAG =~ rc[0-9]+$"
