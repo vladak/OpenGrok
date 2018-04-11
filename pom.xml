@@ -18,16 +18,16 @@ information: Portions Copyright [yyyy] [name of copyright owner]
 
 CDDL HEADER END
 
-Copyright (c) 2010, 2017, Oracle and/or its affiliates. All rights reserved.
+Copyright (c) 2010, 2018, Oracle and/or its affiliates. All rights reserved.
 
 -->
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
   xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.opensolaris.opengrok</groupId>
-    <artifactId>opengrok</artifactId>
+    <artifactId>opengrok-top</artifactId>
     <packaging>pom</packaging>
-    <version>1.1-SNAPSHOT</version>
+    <version>1.1-rcZ</version>
     <name>OpenGrok</name>
     <url>http://opengrok.github.com/OpenGrok/</url>
 
@@ -55,6 +55,7 @@ Copyright (c) 2010, 2017, Oracle and/or its affiliates. All rights reserved.
         <module>plugins</module>
         <module>opengrok-indexer</module>
         <module>opengrok-web</module>
+        <module>distribution</module>
     </modules>
 
     <properties>
@@ -117,6 +118,15 @@ Copyright (c) 2010, 2017, Oracle and/or its affiliates. All rights reserved.
 
     <build>
         <plugins>
+        <plugin>
+          <artifactId>maven-assembly-plugin</artifactId>
+          <version>3.1.0</version>
+          <configuration>
+            <descriptors>
+              <descriptor>assembly.xml</descriptor>
+            </descriptors>
+          </configuration>
+        </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>

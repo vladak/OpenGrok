@@ -1,0 +1,18 @@
+<assembly>
+    <id>bin</id>
+    <formats>
+        <format>tar.gz</format>
+    </formats>
+    <fileSets>
+        <fileSet>
+	    <directory>${project.basedir}/..</directory>
+	    <outputDirectory>doc</outputDirectory>
+	    <includes>
+	      <include>README*</include>
+	    </includes>
+        </fileSet>
+        <fileSet>
+            <directory>${project.basedir}/../lib</directory>
+        </fileSet>
+    </fileSets>
+</assembly>
