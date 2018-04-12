@@ -80,7 +80,13 @@
 	      <include>ConfigMerge</include>
 	      <include>Messages</include>
 	      <include>Groups</include>
-	      <include>sync/*.py</include>
+	    </includes>
+        </fileSet>
+        <fileSet>
+	    <directory>${project.basedir}/../tools/sync</directory>
+	    <outputDirectory>bin</outputDirectory>
+	    <includes>
+	      <include>*.py</include>
 	    </includes>
         </fileSet>
         <fileSet>
