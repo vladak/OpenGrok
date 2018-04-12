@@ -49,12 +49,6 @@
         </executions>
         <configuration>
 	  <executable>java</executable>
-          <mainClass>org.opensolaris.opengrok.index.Indexer</mainClass>
-	  <!--
-	  <additionalClasspathElements>
-	    <additionalClasspathElement>${project.basedir}/../opengrok-indexer/target/opengrok-${version}.jar</additionalClasspathElement>
-	  </additionalClasspathElements>
-	  -->
           <outputFile>dist/opengrok.1</outputFile>
           <arguments>
 	    <argument>-classpath</argument>
