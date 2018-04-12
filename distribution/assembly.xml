@@ -91,6 +91,7 @@
         </fileSet>
         <fileSet>
             <directory>${project.basedir}/../lib</directory>
+	    <outputDirectory>lib/lib</outputDirectory>
         </fileSet>
     </fileSets>
 </assembly>
