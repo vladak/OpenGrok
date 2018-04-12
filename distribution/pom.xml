@@ -50,9 +50,9 @@
     	  <executable>java</executable>
               <outputFile>dist/opengrok.1</outputFile>
               <arguments>
-    	    <argument>-classpath</argument>
-    	    <argument>${project.basedir}/../opengrok-indexer/target/opengrok-${version}.jar</argument>
-    	    <argument>org.opensolaris.opengrok.index.Indexer</argument>
+                <argument>-classpath</argument>
+                <argument>${project.basedir}/../opengrok-indexer/target/opengrok-${version}.jar</argument>
+                <argument>org.opensolaris.opengrok.index.Indexer</argument>
                 <argument>--man</argument>
               </arguments>
             </configuration>
