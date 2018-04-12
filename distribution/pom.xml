@@ -31,27 +31,59 @@
     </dependency>
   </dependencies>
 
-    <build>
-        <plugins>
-            <plugin>
-              <artifactId>maven-assembly-plugin</artifactId>
-              <version>3.1.0</version>
-              <configuration>
-                <descriptors>
-                  <descriptor>assembly.xml</descriptor>
-                </descriptors>
-              </configuration>
-              <executions>
-                <execution>
-                  <id>create-archive</id>
-                  <phase>package</phase>
-                  <goals>
-                    <goal>single</goal>
-                  </goals>
-                </execution>
-              </executions>
-            </plugin>
-        </plugins>
-    </build>
+  <build>
+      <plugins>
+
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>exec-maven-plugin</artifactId>
+        <version>1.6.0</version>
+        <executions>
+          <execution>
+	    <id>man-page</id>
+	    <phase>package</phase>
+            <goals>
+              <goal>exec</goal>
+            </goals>
+          </execution>
+        </executions>
+        <configuration>
+	  <executable>java</executable>
+          <mainClass>org.opensolaris.opengrok.index.Indexer</mainClass>
+	  <!--
+	  <additionalClasspathElements>
+	    <additionalClasspathElement>${project.basedir}/../opengrok-indexer/target/opengrok-${version}.jar</additionalClasspathElement>
+	  </additionalClasspathElements>
+	  -->
+          <outputFile>dist/opengrok.1</outputFile>
+          <arguments>
+	    <argument>-classpath</argument>
+	    <argument>${project.basedir}/../opengrok-indexer/target/opengrok-${version}.jar</argument>
+	    <argument>org.opensolaris.opengrok.index.Indexer</argument>
+            <argument>--man</argument>
+          </arguments>
+        </configuration>
+      </plugin>
+
+          <plugin>
+            <artifactId>maven-assembly-plugin</artifactId>
+            <version>3.1.0</version>
+            <configuration>
+              <descriptors>
+                <descriptor>assembly.xml</descriptor>
+              </descriptors>
+            </configuration>
+            <executions>
+              <execution>
+                <id>create-archive</id>
+                <phase>package</phase>
+                <goals>
+                  <goal>single</goal>
+                </goals>
+              </execution>
+            </executions>
+          </plugin>
+      </plugins>
+  </build>
 
 </project>
