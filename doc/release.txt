@@ -24,8 +24,7 @@ Checklist for releasing OpenGrok:
 
 1) build must be clean
 
-   mvn clean
-   mvn package
+   mvn clean package
 
 2) sanity check:
 
