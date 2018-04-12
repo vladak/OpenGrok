@@ -39,8 +39,8 @@
             <version>1.6.0</version>
             <executions>
               <execution>
-    	    <id>man-page</id>
-    	    <phase>package</phase>
+    	        <id>man-page</id>
+    	        <phase>package</phase>
                 <goals>
                   <goal>exec</goal>
                 </goals>
