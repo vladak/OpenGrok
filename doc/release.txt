@@ -42,11 +42,10 @@ Checklist for releasing OpenGrok:
 3) check all tests, tests code coverage:
    junit, pmd, findbugs, checkstyle, emma, jdepend
 
-   They should be ok, currently only checkstyle has 8 warnings, the rest is
-   clean; emma reports should be based according to what is set for the release,
-   usually it's overall coverage above 80%)
+   emma reports should be based according to what is set for the release,
+   usually it's overall coverage above 80%.
 
-   (jenkins can help here, see README.txt on setup)
+   Jenkins can help here.
 
    The release is OK, once above is fulfilled to our satisfaction.
 
@@ -55,11 +54,10 @@ Checklist for releasing OpenGrok:
      git tag 1.1-rcXYZ
      git push origin tag 1.1-rcXYZ
 
-   Wait for the build to finish and release created
+   Wait for the build to finish and release created.
 
    Go to https://github.com/OpenGrok/OpenGrok/releases and edit the text
    of the release, e.g. adding list of issues fixed, whether complete reindex
    is necessary etc.
 
 5) Send announcement to opengrok-users@yahoogroups.com, Slack channel etc.
-
