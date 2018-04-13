@@ -78,6 +78,9 @@
         <fileSet>
             <directory>${project.basedir}/../lib</directory>
 	    <outputDirectory>lib/lib</outputDirectory>
+	    <includes>
+	      <include>*.jar</include>
+	    </includes>
         </fileSet>
     </fileSets>
 </assembly>
