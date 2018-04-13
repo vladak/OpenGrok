@@ -6,12 +6,12 @@
     <files>
       <file>
         <source>${project.basedir}/../opengrok-indexer/target/opengrok-${version}.jar</source>
-        <outputDirectory>${project.basedir}/dist</outputDirectory>
+        <outputDirectory>lib</outputDirectory>
         <destName>opengrok.jar</destName>
       </file>
       <file>
         <source>${project.basedir}/../plugins/target/plugins-${version}.jar</source>
-        <outputDirectory>${project.basedir}/dist</outputDirectory>
+        <outputDirectory>share/lib</outputDirectory>
         <destName>plugins.jar</destName>
       </file>
     </files>
@@ -47,23 +47,9 @@
         </fileSet>
         <fileSet>
 	    <directory>${project.basedir}/../dist</directory>
-	    <outputDirectory>lib</outputDirectory>
-	    <includes>
-	      <include>opengrok.jar</include>
-	    </includes>
-        </fileSet>
-        <fileSet>
-	    <directory>${project.basedir}/../dist</directory>
 	    <outputDirectory>man/man1</outputDirectory>
 	    <includes>
 	      <include>opengrok.1</include>
-	    </includes>
-        </fileSet>
-        <fileSet>
-	    <directory>${project.basedir}/dist</directory>
-	    <outputDirectory>share/plugins</outputDirectory>
-	    <includes>
-	      <include>plugins.jar</include>
 	    </includes>
         </fileSet>
         <fileSet>
