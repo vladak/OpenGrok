@@ -95,4 +95,9 @@ public class RepositoryMessage extends Message {
         
         super.validate();
     }
+
+    @Override
+    public String getHelp() {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
 }

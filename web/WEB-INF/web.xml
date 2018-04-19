@@ -69,6 +69,10 @@
         </init-param>
     </servlet>
     <servlet>
+        <servlet-name>api-doc</servlet-name>
+        <servlet-class>org.opensolaris.opengrok.web.APIhelp</servlet-class>
+    </servlet>
+    <servlet>
         <servlet-name>api-search</servlet-name>
         <servlet-class>org.opensolaris.opengrok.web.JSONSearchServlet</servlet-class>
     </servlet>
@@ -176,13 +180,10 @@
         <url-pattern>/search</url-pattern>
         <!-- SEARCH_P -->
     </servlet-mapping>
-    <!--
-    XXX The api-doc servlet should generate API documentation
     <servlet-mapping>
         <servlet-name>api-doc</servlet-name>
         <url-pattern>/api</url-pattern>
     </servlet-mapping>
-    -->
     <servlet-mapping>
         <servlet-name>api-search</servlet-name>
         <url-pattern>/api/search</url-pattern>

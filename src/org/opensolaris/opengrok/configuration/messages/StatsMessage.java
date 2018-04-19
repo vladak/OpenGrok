@@ -17,8 +17,8 @@
  * CDDL HEADER END
  */
 
- /*
- * Copyright (c) 2016, 2017, Oracle and/or its affiliates. All rights reserved.
+/*
+ * Copyright (c) 2016, 2018, Oracle and/or its affiliates. All rights reserved.
  */
 package org.opensolaris.opengrok.configuration.messages;
 
@@ -30,7 +30,6 @@ import org.json.simple.parser.ParseException;
 import org.opensolaris.opengrok.configuration.RuntimeEnvironment;
 import static org.opensolaris.opengrok.web.JSONutil.statisticToJson;
 import org.opensolaris.opengrok.web.Statistics;
-import org.opensolaris.opengrok.web.Util;
 
 /**
  *
@@ -65,5 +64,10 @@ public class StatsMessage extends Message {
                             ALLOWED_OPTIONS.stream().collect(Collectors.joining(",")), getText()));
         }
         super.validate();
+    }
+
+    @Override
+    public String getHelp() {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 }

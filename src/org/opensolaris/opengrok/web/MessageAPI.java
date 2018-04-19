@@ -46,8 +46,6 @@ public class MessageAPI extends HttpServlet {
     private final int JSON_MSG_BUFFER_SIZE = 16384; // read buffer size in bytes, specifically for Messages in JSON
     private final int JSON_MAX_LEN = 1024 * 1024; // impose limit on the size of incoming JSON
     
-    private final String ATTRIBUTE_RESULT = "result";
-    
     private class RequestTooLongException extends Exception {
         private final int maxLen;
         
@@ -105,11 +103,14 @@ public class MessageAPI extends HttpServlet {
             return;
         }
 
-        Message message = Message.fromJson(jsonStr);
-        if (message == null) {
+        Message message;
+        try {
+            message = Message.fromJson(jsonStr);
+        } catch (Throwable e) {
             resp.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
                     "failed to convert JSON to Message object");
-            LOGGER.log(Level.SEVERE, "cannot convert JSON to Message: {0}", jsonStr);
+            LOGGER.log(Level.SEVERE, "cannot convert JSON to Message: {0} {1}",
+                    new Object[] {jsonStr, e});
             return;
         }
     
@@ -123,10 +124,12 @@ public class MessageAPI extends HttpServlet {
             return;
         }
         
-        // XXX Convert the bytes of the result to JSON.
-        // XXX need to escape the embedded XML or convert to Base64
+        if (resultBytes == null) {
+            // XXX produce JSON with simple message
+            throw new UnsupportedOperationException("not implemented yet");
+        }
         
         resp.setContentType("application/json");
-        // resp.getWriter().write(result.toString());
+        resp.getWriter().write(Arrays.toString(resultBytes));
     }
 }

@@ -80,11 +80,12 @@ public class ConfigMessage extends Message {
                                 getText()));
             }
         } else if (hasTag("get")) {
+            // XXX need to escape the embedded XML or convert to Base64
             return ClassUtil.invokeGetter(env.getConfiguration(), getText()).getBytes();
         } else if (hasTag("setconf")) {
             env.applyConfig(this, hasTag("reindex"));
         }
-
+        
         return null;
     }
 
@@ -129,5 +130,10 @@ public class ConfigMessage extends Message {
         }
 
         super.validate();
+    }
+
+    @Override
+    public String getHelp() {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 }

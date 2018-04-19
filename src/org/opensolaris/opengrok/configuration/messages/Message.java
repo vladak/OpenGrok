@@ -43,11 +43,9 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Date;
 import java.util.LinkedList;
-import java.util.Locale;
 import java.util.Objects;
 import java.util.Set;
 import java.util.TreeSet;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.opensolaris.opengrok.configuration.RuntimeEnvironment;
 import org.opensolaris.opengrok.logger.LoggerFactory;
@@ -91,7 +89,7 @@ public abstract class Message implements Comparable<Message> {
      * Apply the message to the current runtime environment.
      *
      * @param env the runtime environment
-     * @return possible output for this application, null if no output
+     * @return possible output in JSON format for this application, null if no output
      * @throws java.lang.Exception exception
      */
     protected abstract byte[] applyMessage(RuntimeEnvironment env) throws Exception;
@@ -306,12 +304,6 @@ public abstract class Message implements Comparable<Message> {
         }
     }
 
-    public String getXMLRepresentationAsString() {
-        ByteArrayOutputStream bos = new ByteArrayOutputStream();
-        this.encodeObject(bos);
-        return bos.toString();
-    }
-
     private void encodeObject(OutputStream out) {
         try (XMLEncoder e = new XMLEncoder(new BufferedOutputStream(out))) {
             e.writeObject(this);
@@ -361,19 +353,19 @@ public abstract class Message implements Comparable<Message> {
     /**
      * Convert JSON object to Message object.
      * @param obj JSON object
-     * @return message object
+     * @return message object or {@code null} if the object cannot be decoded
      */
     public static Message fromJson(String obj) {
         JsonParser jp = new JsonParser();
         JsonElement je = jp.parse(obj);
         if (!je.isJsonObject()) {
-            return (null);
+            throw new RuntimeException("is not JSON object");
         }
         JsonObject jo = (JsonObject) je;
         
         Gson gson = new Gson();
         Message m = (Message) gson.fromJson(obj,
-                MessageFactory.getMessageClass(jo.get("className").getAsString()));
+        MessageFactory.getMessageClass(jo.get("className").getAsString()));
 
         return (m);
     }
@@ -407,4 +399,10 @@ public abstract class Message implements Comparable<Message> {
 
         }
     }
+    
+    /**
+     * Get API help for this type of Message.
+     * @return string with JSON documenting API of this Message type
+     */
+    public abstract String getHelp();
 }
