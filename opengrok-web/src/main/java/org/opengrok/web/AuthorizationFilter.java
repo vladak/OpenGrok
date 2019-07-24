@@ -51,7 +51,7 @@ public class AuthorizationFilter implements Filter {
         HttpServletRequest httpReq = (HttpServletRequest) sr;
         HttpServletResponse httpRes = (HttpServletResponse) sr1;
 
-        // All RESTful API requests are allowed for now (also see LocalhostFilter).
+        // All RESTful API requests are allowed for now (however also see LocalhostFilter and AuthenticationFilter).
         // The /search endpoint will go through authorization via SearchEngine.search()
         // so does not have to be exempted here.
         if (httpReq.getServletPath().startsWith(RestApp.API_PATH)) {
