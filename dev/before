@@ -3,6 +3,9 @@
 echo "Environment variables:"
 env | sort
 
+echo "Locale listing"
+locale -a
+
 echo "Reconfiguring locales"
 sudo dpkg-reconfigure locales
 
