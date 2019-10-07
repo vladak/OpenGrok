@@ -22,7 +22,7 @@ addons:
 jobs:
   include:
   - stage: test
-    name: Linux + OpenJDK 8
+    name: Linux + OpenJDK 8 (C locale)
     os: linux
     dist: xenial
     sudo: required
@@ -38,7 +38,7 @@ jobs:
         - LC_CTYPE=C
         - LANGUAGE=C
   - stage: test
-    name: Linux + OpenJDK 8 (C locale)
+    name: Linux + OpenJDK 8
     os: linux
     dist: xenial
     sudo: required
