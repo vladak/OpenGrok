@@ -32,9 +32,10 @@ jobs:
     before_install: dev/before_install
     before_script: dev/before
     env:
-      - LANG=C
-      - LC_ALL=C
-      - LANGUAGE=C
+      global:
+        - LANG=C
+        - LC_ALL=C
+        - LANGUAGE=C
   - stage: test
     name: Linux + OpenJDK 8 (C locale)
     os: linux
