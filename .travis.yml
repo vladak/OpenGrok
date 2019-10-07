@@ -35,6 +35,7 @@ jobs:
       global:
         - LANG=C
         - LC_ALL=C
+        - LC_CTYPE=C
         - LANGUAGE=C
   - stage: test
     name: Linux + OpenJDK 8 (C locale)
