@@ -2,6 +2,9 @@
 
 if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
 
+	echo "Update locales"
+	sudo update-locale
+
 	echo "Reconfiguring locales"
 	sudo dpkg-reconfigure locales
 
