@@ -3,12 +3,6 @@
 echo "Environment variables:"
 env | sort
 
-echo "Locale listing"
-locale -a
-
-echo "Reconfiguring locales"
-sudo dpkg-reconfigure locales
-
 echo "SCM versions:"
 if command -v bk; then bk --version; fi
 if command -v hg; then hg --version; fi

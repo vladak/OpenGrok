@@ -1,12 +1,21 @@
 #!/bin/bash
 
 if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
+
+	echo "Reconfiguring locales"
+	sudo dpkg-reconfigure locales
+
+	echo "Locale listing"
+	locale -a
+
+	echo "Updating packages"
 	sudo apt-get update -qq
 	if [[ $? != 0 ]]; then
 		echo "cannot update"
 		exit 1
 	fi
 
+	echo "Installing packages"
 	sudo apt-get install -qq \
 	    cvs \
 	    git \
