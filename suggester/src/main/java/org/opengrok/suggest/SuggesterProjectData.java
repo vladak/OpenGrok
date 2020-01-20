@@ -300,7 +300,8 @@ class SuggesterProjectData implements Closeable {
                 m = new ChronicleMapAdapter(field, conf.getAverageKeySize(), conf.getEntries(), f);
             } catch (Throwable t) {
                 logger.log(Level.SEVERE,
-                        "Could not create ChronicleMap, most popular completion disabled, if you are using "
+                        "Could not create ChronicleMap, " + conf.getAverageKeySize()
+                                + "most popular completion disabled, if you are using "
                                 + "JDK9+ make sure to specify: "
                                 + "--add-exports java.base/jdk.internal.ref=ALL-UNNAMED "
                                 + "--add-exports java.base/jdk.internal.misc=ALL-UNNAMED "
