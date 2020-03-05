@@ -70,6 +70,10 @@ public class ChronicleMapConfiguration implements Serializable {
         this.averageKeySize = averageKeySize;
     }
 
+    public String toString() {
+        return "entries: " + this.entries + " , average key size: " + this.averageKeySize;
+    }
+
     /**
      * Stores this into a file.
      * @param dir directory where to store the file
@@ -78,6 +82,9 @@ public class ChronicleMapConfiguration implements Serializable {
     public void save(final Path dir, final String field) {
         try (FileOutputStream fos = new FileOutputStream(getFile(dir, field));
              ObjectOutputStream oos = new ObjectOutputStream(fos)) {
+            // XXX debug
+            logger.log(Level.INFO, "Saving chronicle map configuration for field ''{0}'': {1}",
+                    new Object[]{field, this});
             oos.writeObject(this);
         } catch (IOException e) {
             logger.log(Level.SEVERE, "Could not save chronicle map configuration", e);
