@@ -304,8 +304,9 @@ class SuggesterProjectData implements Closeable {
                 return;
             } catch (Throwable t) {
                 logger.log(Level.SEVERE,
-                        "Could not create ChronicleMap, most popular completion disabled, if you are using "
-                                + "JDK9+ make sure to specify: "
+                        "Could not create ChronicleMap for field '" + field
+                                + "', most popular completion disabled, "
+                                + "if you are using JDK9+ make sure to specify: "
                                 + "--add-exports java.base/jdk.internal.ref=ALL-UNNAMED "
                                 + "--add-exports java.base/jdk.internal.misc=ALL-UNNAMED "
                                 + "--add-exports java.base/sun.nio.ch=ALL-UNNAMED", t);
