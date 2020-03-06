@@ -83,8 +83,8 @@ public class ChronicleMapConfiguration implements Serializable {
         try (FileOutputStream fos = new FileOutputStream(getFile(dir, field));
              ObjectOutputStream oos = new ObjectOutputStream(fos)) {
             // XXX debug
-            logger.log(Level.INFO, "Saving chronicle map configuration for field ''{0}'': {1}",
-                    new Object[]{field, this});
+            logger.log(Level.INFO, "Saving chronicle map configuration in directory {0} for field ''{1}'': {2}",
+                    new Object[]{dir.toString(), field, this});
             oos.writeObject(this);
         } catch (IOException e) {
             logger.log(Level.SEVERE, "Could not save chronicle map configuration", e);

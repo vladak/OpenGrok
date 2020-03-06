@@ -299,8 +299,8 @@ class SuggesterProjectData implements Closeable {
             try {
                 m = new ChronicleMapAdapter(field, conf.getAverageKeySize(), conf.getEntries(), f);
             } catch (IllegalArgumentException e) {
-                logger.log(Level.SEVERE, "Could not create ChronicleMap due to invalid key size: "
-                        + conf, e);
+                logger.log(Level.SEVERE, "Could not create ChronicleMap from directory " + suggesterDir
+                        + " for field " + field + " due to invalid key size: " + conf, e);
                 return;
             } catch (Throwable t) {
                 logger.log(Level.SEVERE,
