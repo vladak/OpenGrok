@@ -262,6 +262,8 @@ class SuggesterProjectData implements Closeable {
         lookup.build(iterator);
 
         double averageLength = (double) iterator.termLengthAccumulator / lookup.getCount();
+        logger.log(Level.INFO, "building average lengths map for field {3}: {0} / {1} = {2}",
+                new Object[]{(double) iterator.termLengthAccumulator, lookup.getCount(), averageLength, field});
         averageLengths.put(field, averageLength);
 
         return lookup;
