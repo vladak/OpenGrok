@@ -289,6 +289,8 @@ class SuggesterProjectData implements Closeable {
         for (String field : fields) {
             ChronicleMapConfiguration conf = ChronicleMapConfiguration.load(suggesterDir, field);
             if (conf == null) { // it was not yet initialized
+                logger.log(Level.INFO, "creating Chronicle map config for field {2}: {0}, {1}",
+                        new Object[]{(int) lookups.get(field).getCount(), getAverageLength(field), field});
                 conf = new ChronicleMapConfiguration((int) lookups.get(field).getCount(), getAverageLength(field));
                 conf.save(suggesterDir, field);
             }
