@@ -606,6 +606,7 @@ class SuggesterProjectData implements Closeable {
         @Override
         public BytesRef next() throws IOException {
             last = wrapped.next();
+            logger.log(Level.INFO, "next() called");
 
             // skip very large terms because of the buffer exception
             while (last != null && last.length > MAX_TERM_SIZE) {
