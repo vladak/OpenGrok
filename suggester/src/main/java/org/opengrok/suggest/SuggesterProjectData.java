@@ -18,7 +18,7 @@
  */
 
 /*
- * Copyright (c) 2018 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, 2020 Oracle and/or its affiliates. All rights reserved.
  */
 package org.opengrok.suggest;
 
@@ -265,7 +265,9 @@ class SuggesterProjectData implements Closeable {
         logger.log(Level.INFO, "building average lengths map for field {3} in directory {4}: {0} / {1} = {2}",
                 new Object[]{(double) iterator.termLengthAccumulator, lookup.getCount(), averageLength, field,
                 suggesterDir});
-        averageLengths.put(field, averageLength);
+        if (!Double.isNaN(averageLength)) {
+            averageLengths.put(field, averageLength);
+        }
 
         return lookup;
     }
