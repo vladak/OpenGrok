@@ -19,7 +19,7 @@
 
 /*
  * Copyright (c) 2008, 2019, Oracle and/or its affiliates. All rights reserved.
- * Portions Copyright (c) 2018-2020, Chris Fraire <cfraire@me.com>.
+ * Portions Copyright (c) 2018, Chris Fraire <cfraire@me.com>.
  */
 
 package org.opengrok.indexer.history;
@@ -288,8 +288,10 @@ class FileHistoryCache implements HistoryCache {
      * @param histNew history object with new history entries
      * @param repo repository to where pre pre-image of the cacheFile belong
      * @return merged history (can be null if merge failed for some reason)
+     * @throws HistoryException
      */
-    private History mergeOldAndNewHistory(File cacheFile, History histNew, Repository repo) {
+    private History mergeOldAndNewHistory(File cacheFile, History histNew, Repository repo)
+            throws HistoryException {
 
         History histOld;
         History history = null;
@@ -335,6 +337,7 @@ class FileHistoryCache implements HistoryCache {
      * @param repo repository for the file
      * @param mergeHistory whether to merge the history with existing or
      *                     store the histNew as is
+     * @throws HistoryException
      */
     private void storeFile(History histNew, File file, Repository repo,
             boolean mergeHistory) throws HistoryException {
@@ -360,11 +363,11 @@ class FileHistoryCache implements HistoryCache {
 
         // If the merge failed, null history will be returned.
         // In such case store at least new history as a best effort.
-        if (history == null) {
-            history = histNew;
+        if (history != null) {
+            writeHistoryToFile(dir, history, cacheFile);
+        } else {
+            writeHistoryToFile(dir, histNew, cacheFile);
         }
-
-        writeHistoryToFile(dir, history, cacheFile);
     }
 
     private void storeFile(History histNew, File file, Repository repo)

@@ -19,7 +19,6 @@
 
 /*
  * Copyright (c) 2007, 2018, Oracle and/or its affiliates. All rights reserved.
- * Portions Copyright (c) 2019, Chris Fraire <cfraire@me.com>.
  */
 
 package org.opengrok.indexer.history;
@@ -116,15 +115,11 @@ public class History {
         }
         return false;
     }
-
-    /**
-     * Gets a value indicating if {@code file} is in the list of renamed files.
-     * TODO: Warning -- this does a slow {@link List} search.
-     */
+    
     public boolean isRenamed(String file) {
         return renamedFiles.contains(file);
     }
-
+    
     public List<String> getRenamedFiles() {
         return renamedFiles;
     }
