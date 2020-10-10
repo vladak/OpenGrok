@@ -20,9 +20,13 @@
 /*
  * Copyright (c) 2008, 2018, Oracle and/or its affiliates. All rights reserved.
 <<<<<<< HEAD
+<<<<<<< HEAD
  * Portions Copyright (c) 2019-2020, Chris Fraire <cfraire@me.com>.
 =======
 >>>>>>> parent of 6a2061fd1... Handle git-log merge commits and use -m
+=======
+ * Portions Copyright (c) 2019, Chris Fraire <cfraire@me.com>.
+>>>>>>> parent of 0241b5b52... Fix tests for Windows
  */
 package org.opengrok.indexer.history;
 
@@ -37,7 +41,6 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.opengrok.indexer.util.TestRepository;
-import org.opengrok.indexer.web.Util;
 
 import static org.junit.Assert.*;
 
