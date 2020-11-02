@@ -665,6 +665,7 @@ public class SuggesterControllerTest extends OGKJerseyTest {
 
         assertEquals(Response.Status.NO_CONTENT.getStatusCode(), res.getStatus());
         SuggesterServiceImpl.getInstance().waitForRebuild(15, TimeUnit.SECONDS);
+        SuggesterServiceImpl.getInstance().refresh();
     }
 
     @Test
@@ -677,5 +678,6 @@ public class SuggesterControllerTest extends OGKJerseyTest {
 
         assertEquals(Response.Status.NO_CONTENT.getStatusCode(), res.getStatus());
         SuggesterServiceImpl.getInstance().waitForRebuild(15, TimeUnit.SECONDS);
+        SuggesterServiceImpl.getInstance().refresh();
     }
 }

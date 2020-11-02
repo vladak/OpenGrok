@@ -173,7 +173,7 @@ public final class SuggesterController {
     @PUT
     @Path("/rebuild")
     public void rebuild() {
-        new Thread(() -> suggester.rebuild()).start();
+        suggester.rebuild();
     }
 
     @PUT

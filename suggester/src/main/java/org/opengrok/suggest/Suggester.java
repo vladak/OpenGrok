@@ -18,14 +18,13 @@
  */
 
 /*
- * Copyright (c) 2018, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, 2020, Oracle and/or its affiliates. All rights reserved.
  */
 package org.opengrok.suggest;
 
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
-import org.apache.commons.lang3.time.DurationFormatUtils;
 import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.Term;
@@ -100,12 +99,14 @@ public final class Suggester implements Closeable {
 
     private final CountDownLatch initDone = new CountDownLatch(1);
 
-    private final Counter suggesterRebuildCounter;
     private final Timer suggesterRebuildTimer;
     private final Timer suggesterInitTimer;
 
-    // do NOT use fork join thread pool (work stealing thread pool) because it does not send interrupts upon cancellation
-    private final ExecutorService executorService = Executors.newFixedThreadPool(
+    private final ExecutorService rebuildExecutor;
+
+    // Do NOT use fork join thread pool (work stealing thread pool)
+    // because it does not send interrupts upon cancellation.
+    private final ExecutorService lookupExecutor = Executors.newFixedThreadPool(
             Runtime.getRuntime().availableProcessors(),
             runnable -> {
                 Thread thread = Executors.defaultThreadFactory().newThread(runnable);
@@ -122,7 +123,7 @@ public final class Suggester implements Closeable {
      * @param allowedFields fields for which should the suggester be enabled,
      * if {@code null} then enabled for all fields
      * @param timeThreshold time in milliseconds after which the suggestions requests should time out
-     * @param registry
+     * @param registry meter registry
      */
     public Suggester(
             final File suggesterDir,
@@ -152,9 +153,13 @@ public final class Suggester implements Closeable {
         this.timeThreshold = timeThreshold;
         this.rebuildParallelismLevel = rebuildParallelismLevel;
 
-        suggesterRebuildCounter = Counter.builder("suggester.rebuild").
-                description("suggester rebuild count").
-                register(registry);
+        this.rebuildExecutor = Executors.newFixedThreadPool(rebuildParallelismLevel,
+                runnable -> {
+                    Thread thread = Executors.defaultThreadFactory().newThread(runnable);
+                    thread.setName("suggester-rebuild-" + thread.getId());
+                    return thread;
+                });
+
         suggesterRebuildTimer = Timer.builder("suggester.rebuild.latency").
                 description("suggester rebuild latency").
                 register(registry);
@@ -177,7 +182,6 @@ public final class Suggester implements Closeable {
         }
 
         synchronized (lock) {
-            Instant start = Instant.now();
             logger.log(Level.INFO, "Initializing suggester");
 
             ExecutorService executor = Executors.newWorkStealingPool(rebuildParallelismLevel);
@@ -186,8 +190,7 @@ public final class Suggester implements Closeable {
                 submitInitIfIndexExists(executor, indexDir);
             }
 
-            shutdownAndAwaitTermination(executor, start, suggesterInitTimer,
-                    "Suggester successfully initialized");
+            shutdownAndAwaitTermination(executor, "Suggester successfully initialized");
             initDone.countDown();
         }
     }
@@ -218,7 +221,7 @@ public final class Suggester implements Closeable {
         return () -> {
             try {
                 Instant start = Instant.now();
-                logger.log(Level.FINE, "Initializing {0}", indexDir);
+                logger.log(Level.INFO, "Initializing {0}", indexDir);
 
                 SuggesterProjectData wfst = new SuggesterProjectData(FSDirectory.open(indexDir.path),
                         getSuggesterDir(indexDir.name), allowMostPopular, allowedFields);
@@ -230,7 +233,8 @@ public final class Suggester implements Closeable {
                 }
 
                 Duration d = Duration.between(start, Instant.now());
-                logger.log(Level.FINE, "Finished initialization of {0}, took {1}", new Object[] {indexDir, d});
+                suggesterInitTimer.record(d);
+                logger.log(Level.INFO, "Finished initialization of {0}, took {1}", new Object[] {indexDir, d});
             } catch (Exception e) {
                 logger.log(Level.SEVERE, "Could not initialize suggester data for " + indexDir, e);
             }
@@ -251,17 +255,19 @@ public final class Suggester implements Closeable {
         }
     }
 
-    private void shutdownAndAwaitTermination(final ExecutorService executorService, Instant start,
-                                             Timer timer,
+    private void shutdownAndAwaitTermination(final ExecutorService executorService,
+                                             final String logMessageOnSuccess) {
+        shutdownAndAwaitTermination(executorService, awaitTerminationTime.toMillis(), TimeUnit.MILLISECONDS,
+                logMessageOnSuccess);
+    }
+
+    private void shutdownAndAwaitTermination(final ExecutorService executorService,
+                                             long timeout, TimeUnit timeUnit,
                                              final String logMessageOnSuccess) {
         executorService.shutdown();
         try {
-            executorService.awaitTermination(awaitTerminationTime.toMillis(), TimeUnit.MILLISECONDS);
-            Duration duration = Duration.between(start, Instant.now());
-            timer.record(duration);
-            logger.log(Level.INFO, "{0} (took {1})", new Object[]{logMessageOnSuccess,
-                    DurationFormatUtils.formatDurationWords(duration.toMillis(),
-                            true, true)});
+            executorService.awaitTermination(timeout, timeUnit);
+            logger.log(Level.INFO, "{0}", logMessageOnSuccess);
         } catch (InterruptedException e) {
             logger.log(Level.SEVERE, "Interrupted while building suggesters", e);
             Thread.currentThread().interrupt();
@@ -278,67 +284,40 @@ public final class Suggester implements Closeable {
             return;
         }
 
-        rebuildLock.lock();
-        rebuilding = true;
-        rebuildLock.unlock();
-
         synchronized (lock) {
-            Instant start = Instant.now();
-            suggesterRebuildCounter.increment();
-            logger.log(Level.INFO, "Rebuilding the following suggesters: {0}", indexDirs);
-
-            ExecutorService executor = Executors.newWorkStealingPool(rebuildParallelismLevel);
-
             for (NamedIndexDir indexDir : indexDirs) {
                 SuggesterProjectData data = this.projectData.get(indexDir.name);
                 if (data != null) {
-                    executor.submit(getRebuildRunnable(data));
+                    rebuildExecutor.submit(getRebuildRunnable(data));
                 } else {
-                    submitInitIfIndexExists(executor, indexDir);
+                    submitInitIfIndexExists(rebuildExecutor, indexDir);
                 }
             }
-
-            shutdownAndAwaitTermination(executor, start, suggesterRebuildTimer,
-                    "Suggesters for " + indexDirs + " were successfully rebuilt");
-        }
-
-        rebuildLock.lock();
-        try {
-            rebuilding = false;
-            rebuildDone.signalAll();
-        } finally {
-            rebuildLock.unlock();
         }
     }
 
     /**
-     * wait for rebuild to finish.
+     * Shutdown the executor wait for jobs to finish.
      * @param timeout timeout value
      * @param unit timeout unit
      * @throws InterruptedException
      */
     public void waitForRebuild(long timeout, TimeUnit unit) throws InterruptedException {
-        rebuildLock.lock();
-        try {
-            while (rebuilding) {
-                rebuildDone.await(timeout, unit);
-            }
-        } finally {
-            rebuildLock.unlock();
-        }
+        shutdownAndAwaitTermination(rebuildExecutor, timeout, unit, "Rebuild executor finished.");
     }
 
     private Runnable getRebuildRunnable(final SuggesterProjectData data) {
         return () -> {
             try {
                 Instant start = Instant.now();
-                logger.log(Level.FINE, "Rebuilding {0}", data);
+                logger.log(Level.INFO, "Rebuilding {0}", data);
                 data.rebuild();
 
                 Duration d = Duration.between(start, Instant.now());
-                logger.log(Level.FINE, "Rebuild of {0} finished, took {1}", new Object[] {data, d});
+                suggesterRebuildTimer.record(d);
+                logger.log(Level.INFO, "Rebuild of {0} finished, took {1}", new Object[] {data, d});
             } catch (Exception e) {
-                logger.log(Level.SEVERE, "Could not rebuild suggester", e);
+                logger.log(Level.SEVERE, String.format("Could not rebuild suggester for %s", data), e);
             }
         };
     }
@@ -353,15 +332,15 @@ public final class Suggester implements Closeable {
         }
 
         synchronized (lock) {
-            logger.log(Level.INFO, "Removing following suggesters: {0}", names);
+            logger.log(Level.INFO, "Removing the following suggesters: {0}", names);
 
             for (String suggesterName : names) {
-                SuggesterProjectData collection = projectData.get(suggesterName);
-                if (collection == null) {
+                SuggesterProjectData data = projectData.get(suggesterName);
+                if (data == null) {
                     logger.log(Level.WARNING, "Unknown suggester {0}", suggesterName);
                     continue;
                 }
-                collection.remove();
+                data.remove();
                 projectData.remove(suggesterName);
             }
         }
@@ -446,7 +425,7 @@ public final class Suggester implements Closeable {
 
         List<Future<Void>> futures;
         try {
-            futures = executorService.invokeAll(searchTasks, timeThreshold, TimeUnit.MILLISECONDS);
+            futures = lookupExecutor.invokeAll(searchTasks, timeThreshold, TimeUnit.MILLISECONDS);
         } catch (InterruptedException e) {
             logger.log(Level.WARNING, "Interrupted while invoking suggester search", e);
             Thread.currentThread().interrupt();
@@ -593,7 +572,9 @@ public final class Suggester implements Closeable {
      */
     @Override
     public void close() {
-        executorService.shutdownNow();
+        lookupExecutor.shutdownNow();
+        rebuildExecutor.shutdownNow();
+
         projectData.values().forEach(f -> {
             try {
                 f.close();
