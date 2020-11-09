@@ -50,7 +50,8 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * LDAP server pool
+ * This class represents LDAP server pool. A pool can be shared between authorization plugins
+ * via {@link LdapFacade}.
  */
 public class LdapPool extends AbstractLdapProvider {
     private static final Logger LOGGER = Logger.getLogger(LdapPool.class.getName());
