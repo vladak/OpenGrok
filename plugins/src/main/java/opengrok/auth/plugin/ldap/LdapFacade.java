@@ -88,5 +88,7 @@ public class LdapFacade implements Closeable {
         for (LdapPool pool : map.values()) {
             pool.close();
         }
+
+        LOADED_CONFIGURATIONS.clear();
     }
 }

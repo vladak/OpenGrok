@@ -40,6 +40,7 @@ import javax.naming.directory.SearchResult;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -112,7 +113,7 @@ public class LdapPool extends AbstractLdapProvider {
     /**
      * Configuration for the LDAP servers.
      */
-    private Configuration cfg;
+    private final Configuration cfg;
 
     private final Timer ldapLookupTimer = Timer.builder("ldap.latency").
             description("LDAP lookup latency").
@@ -124,8 +125,9 @@ public class LdapPool extends AbstractLdapProvider {
         setSearchBase(cfg.getSearchBase());
         setWebHooks(cfg.getWebHooks());
 
-        // Anti-pattern: do some non trivial stuff in the constructor.
         prepareSearchControls(cfg.getSearchTimeout(), cfg.getCountLimit());
+
+        // Anti-pattern: do some non trivial stuff in the constructor.
         prepareServers();
 
         this.cfg = cfg;
@@ -234,7 +236,7 @@ public class LdapPool extends AbstractLdapProvider {
     }
 
     public List<LdapServer> getServers() {
-        return servers;
+        return Collections.unmodifiableList(servers);
     }
 
     public LdapPool setServers(List<LdapServer> servers, int connectTimeout, int readTimeout) {
