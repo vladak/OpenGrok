@@ -22,11 +22,8 @@
  */
 package opengrok.auth.plugin;
 
-import java.io.IOException;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 import javax.servlet.http.HttpServletRequest;
-import opengrok.auth.plugin.ldap.Configuration;
 import opengrok.auth.plugin.entity.User;
 import opengrok.auth.plugin.ldap.AbstractLdapProvider;
 import opengrok.auth.plugin.ldap.LdapFacade;

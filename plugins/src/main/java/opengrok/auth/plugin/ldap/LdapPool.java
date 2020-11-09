@@ -38,8 +38,6 @@ import javax.naming.directory.Attribute;
 import javax.naming.directory.Attributes;
 import javax.naming.directory.SearchControls;
 import javax.naming.directory.SearchResult;
-import java.io.File;
-import java.io.IOException;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -48,7 +46,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -288,7 +285,8 @@ public class LdapPool extends AbstractLdapProvider {
      * @return set of strings describing the user's attributes
      */
     @Override
-    public AbstractLdapProvider.LdapSearchResult<Map<String, Set<String>>> lookupLdapContent(String dn, String filter, String[] values) throws LdapException {
+    public AbstractLdapProvider.LdapSearchResult<Map<String, Set<String>>>
+    lookupLdapContent(String dn, String filter, String[] values) throws LdapException {
 
         return lookup(
                 dn != null ? dn : getSearchBase(),
