@@ -53,7 +53,8 @@ public class LdapFacade implements Closeable {
             try {
                 cfg = getConfiguration(configurationPath);
             } catch (IOException ex) {
-                throw new IllegalArgumentException("Unable to read the configuration", ex);
+                throw new IllegalArgumentException(String.format("Unable to read the configuration from %s",
+                        configurationPath), ex);
             }
 
             pool = new LdapPool(cfg);
