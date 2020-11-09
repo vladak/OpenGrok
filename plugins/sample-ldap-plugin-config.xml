@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <java version="1.8.0_65" class="java.beans.XMLDecoder">
-        <object class="opengrok.auth.plugin.configuration.Configuration">
+        <object class="opengrok.auth.plugin.ldap.Configuration">
                 <void property="interval">
                         <int>900000</int>
                 </void>

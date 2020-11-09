@@ -31,6 +31,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedList;
 import junit.framework.AssertionFailedError;
+import opengrok.auth.plugin.ldap.Configuration;
 import opengrok.auth.plugin.ldap.LdapServer;
 import opengrok.auth.plugin.util.WebHook;
 import opengrok.auth.plugin.util.WebHooks;

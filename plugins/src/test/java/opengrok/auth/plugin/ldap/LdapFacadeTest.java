@@ -22,7 +22,6 @@
  */
 package opengrok.auth.plugin.ldap;
 
-import opengrok.auth.plugin.configuration.Configuration;
 import org.junit.Test;
 import org.mockito.Mockito;
 
@@ -47,7 +46,7 @@ public class LdapFacadeTest {
         int countLimit = 32;
         config.setCountLimit(countLimit);
 
-        LdapFacade facade = new LdapFacade(config);
+        LdapPool facade = new LdapPool(config);
         SearchControls controls = facade.getSearchControls();
         assertEquals(searchTimeout, controls.getTimeLimit());
         assertEquals(countLimit, controls.getCountLimit());
@@ -73,7 +72,7 @@ public class LdapFacadeTest {
         int readTimeoutValue = 24;
         config.setReadTimeout(readTimeoutValue);
 
-        LdapFacade facade = new LdapFacade(config);
+        LdapPool facade = new LdapPool(config);
         assertEquals(Collections.singleton(connectTimeoutValue),
                 facade.getServers().stream().map(s -> s.getConnectTimeout()).collect(Collectors.toSet()));
         assertEquals(Collections.singleton(readTimeoutValue),
@@ -92,7 +91,7 @@ public class LdapFacadeTest {
         config.setSearchBase("dc=foo,dc=com");
         int timeoutValue = 3;
         config.setConnectTimeout(timeoutValue);
-        LdapFacade facade = new LdapFacade(config);
+        LdapPool facade = new LdapPool(config);
         assertEquals("{server=no active server, searchBase=dc=foo,dc=com}",
                 facade.toString());
     }
@@ -108,7 +107,7 @@ public class LdapFacadeTest {
         config.setSearchBase("dc=foo,dc=com");
         int timeoutValue = 3;
         config.setConnectTimeout(timeoutValue);
-        LdapFacade facade = new LdapFacade(config);
+        LdapPool facade = new LdapPool(config);
         assertEquals("{server=ldap://foo.com, connect timeout: 3, searchBase=dc=foo,dc=com}",
                 facade.toString());
     }
@@ -127,7 +126,7 @@ public class LdapFacadeTest {
         Mockito.when(serverSpy2.getAddresses(any())).thenReturn(new InetAddress[]{});
 
         config.setServers(Arrays.asList(serverSpy1, serverSpy2));
-        LdapFacade facade = new LdapFacade(config);
+        LdapPool facade = new LdapPool(config);
         facade.prepareServers();
         assertFalse(facade.isConfigured());
     }
@@ -135,8 +134,8 @@ public class LdapFacadeTest {
     @Test
     public void testGetSearchDescription() {
         assertEquals("DN: foo, filter: bar, attributes: Bilbo,Frodo",
-                LdapFacade.getSearchDescription("foo", "bar", new String[]{"Bilbo", "Frodo"}));
+                LdapPool.getSearchDescription("foo", "bar", new String[]{"Bilbo", "Frodo"}));
         assertEquals("DN: foo, filter: bar",
-                LdapFacade.getSearchDescription("foo", "bar", null));
+                LdapPool.getSearchDescription("foo", "bar", null));
     }
 }

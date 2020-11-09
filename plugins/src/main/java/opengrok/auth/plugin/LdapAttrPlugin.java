@@ -90,6 +90,11 @@ public class LdapAttrPlugin extends AbstractLdapPlugin {
         init(parameters);
     }
 
+    @Override
+    public void unload() {
+        // empty
+    }
+
     private void init(Map<String, Object> parameters) {
         if ((ldapAttr = (String) parameters.get(ATTR_PARAM)) == null) {
             throw new NullPointerException("Missing param [" + ATTR_PARAM + "] in the setup");

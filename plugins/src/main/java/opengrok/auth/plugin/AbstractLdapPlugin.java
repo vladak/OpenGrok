@@ -22,12 +22,11 @@
  */
 package opengrok.auth.plugin;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import javax.servlet.http.HttpServletRequest;
-import opengrok.auth.plugin.configuration.Configuration;
+import opengrok.auth.plugin.ldap.Configuration;
 import opengrok.auth.plugin.entity.User;
 import opengrok.auth.plugin.ldap.AbstractLdapProvider;
 import opengrok.auth.plugin.ldap.LdapFacade;
@@ -62,17 +61,6 @@ public abstract class AbstractLdapPlugin implements IAuthorizationPlugin {
     private static final String SESSION_PREFIX = "opengrok-abstract-ldap-plugin-";
     protected String SESSION_USERNAME = SESSION_PREFIX + "username";
     protected String SESSION_ESTABLISHED = SESSION_PREFIX + "session-established";
-
-    /**
-     * Configuration for the LDAP servers.
-     */
-    private Configuration cfg;
-
-    /**
-     * Map of currently used configurations.<br>
-     * file path => object.
-     */
-    private static final Map<String, Configuration> LOADED_CONFIGURATIONS = new ConcurrentHashMap<>();
 
     /**
      * LDAP lookup facade.
@@ -127,50 +115,12 @@ public abstract class AbstractLdapPlugin implements IAuthorizationPlugin {
             throw new NullPointerException("Missing param [" + CONFIGURATION_PARAM + "]");
         }
 
-        try {
-            cfg = getConfiguration(configurationPath);
-            ldapProvider = new LdapFacade(cfg);
-        } catch (IOException ex) {
-            throw new IllegalArgumentException("Unable to read the configuration", ex);
-        }
+        ldapProvider = LdapFacade.getPool(configurationPath);
     }
 
-    /**
-     * Return the configuration for the given path. If the configuration is
-     * already loaded, use that one. Otherwise try to load the file into the
-     * configuration.
-     *
-     * @param configurationPath the path to the file with the configuration
-     * @return the object (new or from cache)
-     * @throws IOException when any IO error occurs
-     */
-    protected Configuration getConfiguration(String configurationPath) throws IOException {
-        if ((cfg = LOADED_CONFIGURATIONS.get(configurationPath)) == null) {
-            LOADED_CONFIGURATIONS.put(configurationPath, cfg =
-                    Configuration.read(new File(configurationPath)));
-        }
-        return cfg;
-    }
-
-    /**
-     * Closes the LDAP connections.
-     */
     @Override
     public void unload() {
-        if (ldapProvider != null) {
-            ldapProvider.close();
-            ldapProvider = null;
-        }
-        cfg = null;
-    }
-
-    /**
-     * Return the configuration object.
-     *
-     * @return the configuration
-     */
-    public Configuration getConfiguration() {
-        return cfg;
+        // empty
     }
 
     /**

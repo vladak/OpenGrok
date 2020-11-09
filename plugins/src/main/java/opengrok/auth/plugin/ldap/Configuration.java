@@ -20,7 +20,7 @@
 /*
  * Copyright (c) 2016, 2020, Oracle and/or its affiliates. All rights reserved.
  */
-package opengrok.auth.plugin.configuration;
+package opengrok.auth.plugin.ldap;
 
 import java.beans.XMLDecoder;
 import java.beans.XMLEncoder;
@@ -36,11 +36,11 @@ import java.io.OutputStream;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
-import opengrok.auth.plugin.ldap.LdapServer;
+
 import opengrok.auth.plugin.util.WebHooks;
 
 /**
- * Encapsulates configuration for LDAP plugins.
+ * Encapsulates configuration for LDAP pool.
  */
 public class Configuration implements Serializable {
 

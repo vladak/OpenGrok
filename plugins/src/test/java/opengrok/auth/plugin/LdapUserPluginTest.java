@@ -33,6 +33,7 @@ import opengrok.auth.plugin.entity.User;
 import opengrok.auth.plugin.ldap.AbstractLdapProvider;
 import opengrok.auth.plugin.ldap.LdapException;
 import opengrok.auth.plugin.ldap.LdapFacade;
+import opengrok.auth.plugin.ldap.LdapPool;
 import opengrok.auth.plugin.util.DummyHttpServletRequestLdap;
 import org.junit.Before;
 import org.junit.Test;
@@ -96,7 +97,7 @@ public class LdapUserPluginTest {
 
     @Test
     public void testFillSessionWithDnOff() throws LdapException {
-        AbstractLdapProvider mockprovider = mock(LdapFacade.class);
+        AbstractLdapProvider mockprovider = mock(LdapPool.class);
         Map<String, Set<String>> attrs = new HashMap<>();
         attrs.put("mail", Collections.singleton("foo@bar.cz"));
         final String dn = "cn=FOO_BAR,L=EMEA,DC=FOO,DC=COM";

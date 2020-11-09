@@ -43,6 +43,7 @@ import opengrok.auth.plugin.ldap.AbstractLdapProvider;
 import opengrok.auth.plugin.ldap.FakeLdapFacade;
 import opengrok.auth.plugin.ldap.LdapException;
 import opengrok.auth.plugin.ldap.LdapFacade;
+import opengrok.auth.plugin.ldap.LdapPool;
 import opengrok.auth.plugin.util.DummyHttpServletRequestLdap;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -171,7 +172,7 @@ public class LdapAttrPluginTest {
         String mail_attr_value = "james@bond.com";
 
         // Create mock LDAP provider, simulating the work of LdapUserPlugin.
-        AbstractLdapProvider mockprovider = mock(LdapFacade.class);
+        AbstractLdapProvider mockprovider = mock(LdapPool.class);
         Map<String, Set<String>> attrs = new HashMap<>();
         attrs.put(attr_to_get, Collections.singleton(mail_attr_value));
         final String dn = "cn=FOO_BAR,L=EMEA,DC=FOO,DC=COM";
