@@ -37,7 +37,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.mockito.ArgumentMatchers.any;
 
-public class LdapFacadeTest {
+public class LdapPoolTest {
     @Test
     public void testSearchControlsConfig() {
         Configuration config = new Configuration();
@@ -46,8 +46,8 @@ public class LdapFacadeTest {
         int countLimit = 32;
         config.setCountLimit(countLimit);
 
-        LdapPool facade = new LdapPool(config);
-        SearchControls controls = facade.getSearchControls();
+        LdapPool pool = new LdapPool(config);
+        SearchControls controls = pool.getSearchControls();
         assertEquals(searchTimeout, controls.getTimeLimit());
         assertEquals(countLimit, controls.getCountLimit());
     }
@@ -72,11 +72,11 @@ public class LdapFacadeTest {
         int readTimeoutValue = 24;
         config.setReadTimeout(readTimeoutValue);
 
-        LdapPool facade = new LdapPool(config);
+        LdapPool pool = new LdapPool(config);
         assertEquals(Collections.singleton(connectTimeoutValue),
-                facade.getServers().stream().map(s -> s.getConnectTimeout()).collect(Collectors.toSet()));
+                pool.getServers().stream().map(s -> s.getConnectTimeout()).collect(Collectors.toSet()));
         assertEquals(Collections.singleton(readTimeoutValue),
-                facade.getServers().stream().map(s -> s.getReadTimeout()).collect(Collectors.toSet()));
+                pool.getServers().stream().map(s -> s.getReadTimeout()).collect(Collectors.toSet()));
     }
 
     @Test
@@ -91,9 +91,9 @@ public class LdapFacadeTest {
         config.setSearchBase("dc=foo,dc=com");
         int timeoutValue = 3;
         config.setConnectTimeout(timeoutValue);
-        LdapPool facade = new LdapPool(config);
+        LdapPool pool = new LdapPool(config);
         assertEquals("{server=no active server, searchBase=dc=foo,dc=com}",
-                facade.toString());
+                pool.toString());
     }
 
     @Test
@@ -107,9 +107,9 @@ public class LdapFacadeTest {
         config.setSearchBase("dc=foo,dc=com");
         int timeoutValue = 3;
         config.setConnectTimeout(timeoutValue);
-        LdapPool facade = new LdapPool(config);
+        LdapPool pool = new LdapPool(config);
         assertEquals("{server=ldap://foo.com, connect timeout: 3, searchBase=dc=foo,dc=com}",
-                facade.toString());
+                pool.toString());
     }
 
     @Test
@@ -126,9 +126,9 @@ public class LdapFacadeTest {
         Mockito.when(serverSpy2.getAddresses(any())).thenReturn(new InetAddress[]{});
 
         config.setServers(Arrays.asList(serverSpy1, serverSpy2));
-        LdapPool facade = new LdapPool(config);
-        facade.prepareServers();
-        assertFalse(facade.isConfigured());
+        LdapPool pool = new LdapPool(config);
+        pool.prepareServers();
+        assertFalse(pool.isConfigured());
     }
 
     @Test
