@@ -363,21 +363,23 @@ public class LdapPool extends AbstractLdapProvider {
         if (errorTimestamp > 0 && errorTimestamp + interval > System.currentTimeMillis()) {
             if (!reported) {
                 reported = true;
-                LOGGER.log(Level.SEVERE, "LDAP server pool is still broken");
+                LOGGER.log(Level.SEVERE, "LDAP server pool {0} is still broken", this);
             }
-            throw new LdapException("LDAP server pool is still broken");
+            throw new LdapException(String.format("LDAP server pool %s is still broken", this));
         }
 
         if (fail > servers.size() - 1) {
             // did the whole rotation
-            LOGGER.log(Level.SEVERE, "Tried all LDAP servers in a pool but no server works");
+            LOGGER.log(Level.SEVERE, String.format("Tried all LDAP servers in the %s pool but no server works",
+                    this));
             errorTimestamp = System.currentTimeMillis();
             reported = false;
             WebHook hook;
             if ((hook = webHooks.getFail()) != null) {
                 hook.post();
             }
-            throw new LdapException("Tried all LDAP servers in a pool but no server works");
+            throw new LdapException(String.format("Tried all LDAP servers in the %s pool but no server works",
+                    this));
         }
 
         if (!isConfigured()) {
