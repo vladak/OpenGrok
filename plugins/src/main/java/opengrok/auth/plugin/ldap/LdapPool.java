@@ -320,7 +320,8 @@ public class LdapPool extends AbstractLdapProvider {
      *
      * @return results transformed with mapper
      */
-    private <T> AbstractLdapProvider.LdapSearchResult<T> lookup(String dn, String filter, String[] attributes, AttributeMapper<T> mapper) throws LdapException {
+    private <T> AbstractLdapProvider.LdapSearchResult<T> lookup(String dn, String filter, String[] attributes,
+                                                                AttributeMapper<T> mapper) throws LdapException {
         Instant start = Instant.now();
         AbstractLdapProvider.LdapSearchResult<T> res = lookup(dn, filter, attributes, mapper, 0);
         ldapLookupTimer.record(Duration.between(start, Instant.now()));
@@ -354,7 +355,9 @@ public class LdapPool extends AbstractLdapProvider {
      * @return results transformed with mapper or {@code null} on failure
      * @throws LdapException LDAP exception
      */
-    private <T> AbstractLdapProvider.LdapSearchResult<T> lookup(String dn, String filter, String[] attributes, AttributeMapper<T> mapper, int fail) throws LdapException {
+    private <T> AbstractLdapProvider.LdapSearchResult<T> lookup(String dn, String filter, String[] attributes,
+                                                                AttributeMapper<T> mapper, int fail)
+            throws LdapException {
 
         if (errorTimestamp > 0 && errorTimestamp + interval > System.currentTimeMillis()) {
             if (!reported) {
