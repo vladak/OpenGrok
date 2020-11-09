@@ -42,7 +42,6 @@ import opengrok.auth.plugin.entity.User;
 import opengrok.auth.plugin.ldap.AbstractLdapProvider;
 import opengrok.auth.plugin.ldap.FakeLdapFacade;
 import opengrok.auth.plugin.ldap.LdapException;
-import opengrok.auth.plugin.ldap.LdapFacade;
 import opengrok.auth.plugin.ldap.LdapPool;
 import opengrok.auth.plugin.util.DummyHttpServletRequestLdap;
 import org.junit.AfterClass;
