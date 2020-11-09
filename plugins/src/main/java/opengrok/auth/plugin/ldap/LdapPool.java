@@ -383,8 +383,8 @@ public class LdapPool extends AbstractLdapProvider {
         }
 
         if (!isConfigured()) {
-            LOGGER.log(Level.SEVERE, "LDAP is not configured");
-            throw new LdapException("LDAP is not configured");
+            LOGGER.log(Level.SEVERE, "LDAP pool {0} is not configured", this);
+            throw new LdapException(String.format("LDAP pool %s is not configured", this));
         }
 
         NamingEnumeration<SearchResult> namingEnum = null;
