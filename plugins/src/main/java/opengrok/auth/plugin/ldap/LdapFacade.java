@@ -25,7 +25,6 @@ package opengrok.auth.plugin.ldap;
 import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Logger;
@@ -40,14 +39,14 @@ public class LdapFacade implements Closeable {
      */
     private static final Map<String, Configuration> LOADED_CONFIGURATIONS = new ConcurrentHashMap<>();
 
-    private static final Map<String, LdapPool> map = new HashMap<>();
+    private static final Map<String, LdapPool> POOL_MAP = new ConcurrentHashMap<>();
 
     private LdapFacade() {
         // private to ensure everyone has to go through getPool()
     }
 
     public static LdapPool getPool(String configurationPath) {
-        LdapPool pool = map.get(configurationPath);
+        LdapPool pool = POOL_MAP.get(configurationPath);
         if (pool == null) {
             Configuration cfg;
             try {
@@ -58,7 +57,7 @@ public class LdapFacade implements Closeable {
             }
 
             pool = new LdapPool(cfg);
-            map.put(configurationPath, pool);
+            POOL_MAP.put(configurationPath, pool);
         }
 
         return pool;
@@ -86,7 +85,7 @@ public class LdapFacade implements Closeable {
     @Override
     public void close() throws IOException {
         // TODO: synchronize with getPool()
-        for (LdapPool pool : map.values()) {
+        for (LdapPool pool : POOL_MAP.values()) {
             pool.close();
         }
 
