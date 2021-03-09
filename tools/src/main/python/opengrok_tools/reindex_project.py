@@ -94,9 +94,10 @@ def main():
                         help='Set response timeout in seconds for RESTful API calls')
 
     cmd_args = sys.argv[1:]
-    extra_opts = os.environ.get("OPENGROK_INDEXER_OPTIONAL_ARGS")
+    extra_opts = os.environ.get("OPENGROK_INDEXER_OPTIONAL_ARGS").split()
     if extra_opts:
-        cmd_args.extend(extra_opts.split())
+        # Prepend the extra options because we want the arguments to end with a project.
+        cmd_args = extra_opts + cmd_args
 
     try:
         args = parser.parse_args(cmd_args)
