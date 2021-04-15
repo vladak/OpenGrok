@@ -518,6 +518,10 @@ public class GitRepositoryTest {
         for (HistoryEntry e : history.getHistoryEntries()) {
             System.out.println(e.getRevision() + " " + e.getFiles().toString());
         }
+        System.out.println("renamed");
+        for (String path : history.getRenamedFiles()) {
+            System.out.println(path);
+        }
         System.out.println("XXX");
         assertNotNull(history);
         assertNotNull(history.getHistoryEntries());
