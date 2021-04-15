@@ -36,6 +36,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.stream.Collectors;
 
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.lib.ObjectId;
@@ -514,6 +515,11 @@ public class GitRepositoryTest {
                 = (GitRepository) RepositoryFactory.getRepository(root);
 
         History history = gitrepo.getHistory(root);
+        System.out.println("XXX");
+        for (HistoryEntry e : history.getHistoryEntries()) {
+            System.out.println(e.getRevision() + " " + e.getFiles().toString());
+        }
+        System.out.println("XXX");
         assertNotNull(history);
         assertNotNull(history.getHistoryEntries());
         assertEquals(8, history.getHistoryEntries().size());
