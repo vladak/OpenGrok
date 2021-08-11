@@ -19,6 +19,7 @@
 
 /*
  * Copyright (c) 2017, 2020, Chris Fraire <cfraire@me.com>.
+ * Copyright (c) 2021, Oracle and/or its affiliates. All rights reserved.
  */
 package org.opengrok.indexer.index;
 
@@ -36,11 +37,11 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Comparator;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
@@ -82,8 +83,7 @@ class PendingFileCompleter {
      */
     public static final String PENDING_EXTENSION = ".org_opengrok";
 
-    private static final Logger LOGGER =
-        LoggerFactory.getLogger(PendingFileCompleter.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(PendingFileCompleter.class);
 
     private final Object INSTANCE_LOCK = new Object();
 
@@ -110,11 +110,11 @@ class PendingFileCompleter {
             return cmp;
     };
 
-    private final Set<PendingFileDeletion> deletions = new HashSet<>();
+    private final Set<PendingFileDeletion> deletions = ConcurrentHashMap.newKeySet();
 
-    private final Set<PendingFileRenaming> renames = new HashSet<>();
+    private final Set<PendingFileRenaming> renames = ConcurrentHashMap.newKeySet();
 
-    private final Set<PendingSymlinkage> linkages = new HashSet<>();
+    private final Set<PendingSymlinkage> linkages = ConcurrentHashMap.newKeySet();
 
     /**
      * Adds the specified element to this instance's set if it is not already
