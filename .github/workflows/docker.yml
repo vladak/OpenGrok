@@ -13,9 +13,6 @@ jobs:
         python-version: '3.10'
     - name: Install dependencies
       run: python3 -m pip install -r docker/requirements.txt
-    - name: Install opengrok-tools
-      run: python3 setup.py install
-      working-directory: tools
     - name: Docker metadata generation
       id: meta
       uses: docker/metadata-action@v4
