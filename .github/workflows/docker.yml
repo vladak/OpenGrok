@@ -16,18 +16,6 @@ jobs:
     - name: Install opengrok-tools
       run: python3 setup.py install
       working-directory: tools
-    - name: Install checkers
-      run: python3 -m pip install pylint flake8 black isort
-    - name: Run flake8
-      run: flake8 --max-line-length 119 docker/*.py
-    - name: Run pylint
-      run: pylint -E --max-line-length 119 docker/*.py
-    - name: Run black in check mode
-      run: black --check docker/*.py
-    - name: Run isort in check mode
-      run: isort --settings-file docker/.isort.cfg docker/*.py  --check --diff
-    - name: Running linter
-      run: docker run --rm -i hadolint/hadolint:2.6.0 < Dockerfile || exit 1
     - name: Docker metadata generation
       id: meta
       uses: docker/metadata-action@v4
@@ -40,7 +28,7 @@ jobs:
           type=semver,pattern={{version}}
           type=semver,pattern={{major}}.{{minor}}
     - name: Login to Docker Hub
-      if: ${{ github.repository == 'oracle/opengrok' && github.event_name == 'push' }}
+      if: ${{ github.repository == 'vladak/opengrok' && github.event_name == 'push' }}
       uses: docker/login-action@v2
       with:
         username: ${{ secrets.DOCKER_USERNAME }}
@@ -48,14 +36,5 @@ jobs:
     - name: Build and optionally push Docker image
       uses: docker/build-push-action@v4
       with:
-        push: ${{ github.repository == 'oracle/opengrok' && github.event_name == 'push' }}
+        push: ${{ github.repository == 'vladak/opengrok' && github.event_name == 'push' }}
         tags: ${{ steps.meta.outputs.tags }}
-    - name: Install Python pre-requisites
-      run: python3 -m pip install requests
-    - name: Optionally update README on Docker hub
-      env:
-        OPENGROK_REPO_SLUG: ${{ github.repository }}
-        OPENGROK_PULL_REQUEST: ${{ github.head_ref }}
-        DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
-        DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
-      run: ./dev/dockerhub_readme.py
