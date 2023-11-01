@@ -527,7 +527,6 @@ class FileHistoryCacheTest {
      * (i.e. there should not be history entries from the default branch made
      * there after the branch was created).
      */
-    @EnabledOnOs({OS.LINUX, OS.MAC, OS.SOLARIS, OS.AIX, OS.OTHER})
     @EnabledForRepository(MERCURIAL)
     @Test
     void testRenamedFilePlusChangesBranched() throws Exception {
