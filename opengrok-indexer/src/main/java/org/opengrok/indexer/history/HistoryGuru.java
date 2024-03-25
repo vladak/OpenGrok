@@ -493,7 +493,13 @@ public final class HistoryGuru {
     }
 
     public History getHistory(File file, boolean withFiles, boolean ui) throws HistoryException {
-        return getHistory(file, withFiles, ui, true);
+        return getHistory(file, withFiles, ui, FallbackType.ALL);
+    }
+
+    public enum FallbackType {
+        NO_FALLBACK,
+        FILE_BASED,
+        ALL,
     }
 
     /**
@@ -503,13 +509,13 @@ public final class HistoryGuru {
      * @param withFiles whether the returned history should contain a
      * list of files touched by each changeset (the file list may be skipped if false, but it doesn't have to)
      * @param ui called from the webapp
-     * @param fallback fall back to fetching the history from the repository
+     * @param fallbackType fall back type to decide whether fetch the history from the repository
      *                 if it cannot be retrieved from history cache
      * @return history for the file or <code>null</code>
      * @throws HistoryException on error when accessing the history
      */
     @Nullable
-    public History getHistory(File file, boolean withFiles, boolean ui, boolean fallback) throws HistoryException {
+    public History getHistory(File file, boolean withFiles, boolean ui, FallbackType fallbackType) throws HistoryException {
 
         final File dir = file.isDirectory() ? file : file.getParentFile();
         final Repository repository = getRepository(dir);
@@ -526,8 +532,16 @@ public final class HistoryGuru {
                 return history;
             }
 
-            if (fallback) {
-                return getHistoryFromRepository(file, repository, ui);
+            switch (fallbackType) {
+                case NO_FALLBACK:
+                    return null;
+                case FILE_BASED:
+                    if (!repository.hasHistoryForDirectories()) {
+                        return getHistoryFromRepository(file, repository, ui);
+                    }
+                    break;
+                case ALL:
+                    return getHistoryFromRepository(file, repository, ui);
             }
         } catch (CacheException e) {
             LOGGER.log(Level.FINER, e.getMessage());

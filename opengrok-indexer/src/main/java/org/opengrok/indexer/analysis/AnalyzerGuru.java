@@ -647,7 +647,7 @@ public class AnalyzerGuru {
     private static void populateDocumentHistory(Document doc, File file) {
         try {
             HistoryGuru histGuru = HistoryGuru.getInstance();
-            History history = histGuru.getHistory(file, false);
+            History history = histGuru.getHistory(file, false, false, HistoryGuru.FallbackType.FILE_BASED);
             if (history != null) {
                 HistoryReader hr = new HistoryReader(history);
                 doc.add(new TextField(QueryBuilder.HIST, hr));
