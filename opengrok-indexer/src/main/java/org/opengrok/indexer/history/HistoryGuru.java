@@ -533,6 +533,12 @@ public final class HistoryGuru {
             return null;
         }
 
+        // There is no sense in checking the history cache for the repository if the history is disabled.
+        if (!repository.isHistoryEnabled()) {
+            LOGGER.log(Level.FINE, "history is off for repository {0}", repository);
+            return null;
+        }
+
         History history;
         try {
             history = getHistoryFromCache(file, repository, withFiles);
