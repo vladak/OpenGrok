@@ -497,7 +497,7 @@ public final class HistoryGuru {
     }
 
     /**
-     * Fallback type for {@link #getHistory(File, boolean, boolean, FallbackType)}
+     * Fallback type for {@link #getHistory(File, boolean, boolean, FallbackType)}.
      * <ul>
      *     <li><code>NO_FALLBACK</code>: never fall back</li>
      *     <li><code>FILE_BASED</code>: only fall back if the repository cannot retrieve history for directories</li>
