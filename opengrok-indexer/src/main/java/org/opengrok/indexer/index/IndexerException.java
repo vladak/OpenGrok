@@ -34,4 +34,7 @@ public class IndexerException extends Exception {
       super(string);
    }
 
+   IndexerException(Exception e) {
+      super(e);
+   }
 }

@@ -323,9 +323,10 @@ public class IndexDatabase {
      *
      * @param listener where to signal the changes to the database
      * @param historyCacheResults map of repository to optional exception
+     * @return list of Throwable objects (can be empty)
      * @throws IOException if an error occurs
      */
-    static CountDownLatch updateAll(IndexChangedListener listener,
+    static List<Throwable> updateAll(IndexChangedListener listener,
                                     Map<Repository, Optional<Exception>> historyCacheResults) throws IOException {
 
         RuntimeEnvironment env = RuntimeEnvironment.getInstance();
@@ -341,6 +342,7 @@ public class IndexDatabase {
 
         IndexerParallelizer parallelizer = RuntimeEnvironment.getInstance().getIndexerParallelizer();
         CountDownLatch latch = new CountDownLatch(dbs.size());
+        List<Throwable> throwableList = new ArrayList<>();
         for (IndexDatabase d : dbs) {
             final IndexDatabase db = d;
             if (listener != null) {
@@ -351,71 +353,21 @@ public class IndexDatabase {
                 try {
                     db.update();
                 } catch (Throwable e) {
-                    LOGGER.log(Level.SEVERE,
-                            String.format("Problem updating index database in directory %s: ",
-                                    db.indexDirectory.getDirectory()), e);
+                    throwableList.add(e);
+                    LOGGER.log(Level.SEVERE, String.format("Problem updating index database in directory '%s': ",
+                            db.indexDirectory.getDirectory()), e);
                 } finally {
                     latch.countDown();
                 }
             });
         }
-        return latch;
-    }
-
-    /**
-     * Update the index database for a number of sub-directories.
-     *
-     * @param listener where to signal the changes to the database
-     * @param paths list of paths to be indexed
-     */
-    public static void update(IndexChangedListener listener, List<String> paths) {
-        RuntimeEnvironment env = RuntimeEnvironment.getInstance();
-        IndexerParallelizer parallelizer = env.getIndexerParallelizer();
-        List<IndexDatabase> dbs = new ArrayList<>();
-
-        for (String path : paths) {
-            Project project = Project.getProject(path);
-            if (project == null && env.hasProjects()) {
-                LOGGER.log(Level.WARNING, "Could not find a project for \"{0}\"", path);
-            } else {
-                IndexDatabase db;
-
-                try {
-                    if (project == null) {
-                        db = new IndexDatabase();
-                    } else {
-                        db = new IndexDatabase(project);
-                    }
-
-                    int idx = dbs.indexOf(db);
-                    if (idx != -1) {
-                        db = dbs.get(idx);
-                    }
-
-                    if (db.addDirectory(path)) {
-                        if (idx == -1) {
-                            dbs.add(db);
-                        }
-                    } else {
-                        LOGGER.log(Level.WARNING, "Directory does not exist \"{0}\" .", path);
-                    }
-                } catch (IOException e) {
-                    LOGGER.log(Level.WARNING, "An error occurred while updating index", e);
-
-                }
-            }
-
-            for (final IndexDatabase db : dbs) {
-                db.addIndexChangedListener(listener);
-                parallelizer.getFixedExecutor().submit(() -> {
-                    try {
-                        db.update();
-                    } catch (Throwable e) {
-                        LOGGER.log(Level.SEVERE, "An error occurred while updating index", e);
-                    }
-                });
-            }
+        try {
+            latch.await();
+        } catch (InterruptedException e) {
+            throwableList.add(e);
         }
+
+        return throwableList;
     }
 
     @SuppressWarnings("PMD.CollapsibleIfStatements")
@@ -452,9 +404,8 @@ public class IndexDatabase {
     }
 
     /**
-     * By default the indexer will traverse all directories in the project. If
-     * you add directories with this function update will just process the
-     * specified directories.
+     * By default, the indexer will traverse all directories in the project.
+     * If you add directories with this function update will just process the specified directories.
      *
      * @param dir The directory to scan
      * @return <code>true</code> if the file is added, false otherwise
@@ -664,11 +615,12 @@ public class IndexDatabase {
      * Update the content of this index database.
      *
      * @throws IOException if an error occurs
+     * @throws IndexerException if the indexing was incomplete/failed
      */
-    public void update() throws IOException {
+    public void update() throws IOException, IndexerException {
         synchronized (lock) {
             if (running) {
-                throw new IOException("Indexer already running!");
+                throw new IndexerException("Indexer already running!");
             }
             running = true;
             interrupted = false;
@@ -746,7 +698,7 @@ public class IndexDatabase {
                         if (stat == TermsEnum.SeekStatus.END) {
                             uidIter = null;
                             LOGGER.log(Level.WARNING,
-                                "Couldn''t find a start term for {0}, empty u field?", startUid);
+                                "Could not find a start term for {0}, empty u field?", startUid);
                         }
                     }
 
@@ -801,8 +753,7 @@ public class IndexDatabase {
                 finishingException = e;
             }
         } catch (RuntimeException ex) {
-            LOGGER.log(Level.SEVERE,
-                "Failed with unexpected RuntimeException", ex);
+            LOGGER.log(Level.SEVERE, "Failed with unexpected RuntimeException", ex);
             throw ex;
         } finally {
             completer = null;
@@ -814,8 +765,7 @@ public class IndexDatabase {
                 if (finishingException == null) {
                     finishingException = e;
                 }
-                LOGGER.log(Level.WARNING,
-                    "An error occurred while closing writer", e);
+                LOGGER.log(Level.WARNING, "An error occurred while closing writer", e);
             } finally {
                 writer = null;
                 synchronized (lock) {
@@ -1938,8 +1888,9 @@ public class IndexDatabase {
      * Executes the second, parallel stage of indexing.
      * @param dir the parent directory (when appended to SOURCE_ROOT)
      * @param args contains a list of files to index, found during the earlier stage
+     * @throws IndexerException in case the indexing failed or was interrupted
      */
-    private void indexParallel(String dir, IndexDownArgs args) {
+    private void indexParallel(String dir, IndexDownArgs args) throws IndexerException {
 
         int worksCount = args.works.size();
         if (worksCount < 1) {
@@ -2005,12 +1956,13 @@ public class IndexDatabase {
                 bySuccess.computeIfAbsent(work.ret, key -> new ArrayList<>()).add(work);
             }
         } catch (InterruptedException | ExecutionException e) {
-            interrupted = true;
+            interrupted = true; // TODO: isInterrupted() vs throw below
             int successCount = successCounter.intValue();
             double successPct = 100.0 * successCount / worksCount;
             String exmsg = String.format("%d successes (%.1f%%) after aborting parallel-indexing",
                 successCount, successPct);
             LOGGER.log(Level.SEVERE, exmsg, e);
+            throw new IndexerException(e);
         }
 
         args.curCount = currentCounter.intValue();

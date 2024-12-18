@@ -49,6 +49,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Scanner;
 import java.util.Set;
@@ -61,6 +62,7 @@ import java.util.stream.Collectors;
 import org.apache.commons.lang3.SystemUtils;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.VisibleForTesting;
 import org.opengrok.indexer.Info;
 import org.opengrok.indexer.Metrics;
 import org.opengrok.indexer.analysis.AnalyzerGuru;
@@ -171,8 +173,10 @@ public final class Indexer {
 
         Executor.registerErrorHandler();
         List<String> subFiles = RuntimeEnvironment.getInstance().getSubFiles();
-        Set<String> subFilePaths = new HashSet<>();
-        Set<String> subFileArgs = new HashSet<>();
+        Set<String> subFilePaths = new HashSet<>(); // absolute paths
+        Set<String> subFileArgs = new HashSet<>();  // relative to source root
+        List<Throwable> throwableList = new ArrayList<>();
+        int exitCode = 0;
 
         try {
             argv = parseOptions(argv);
@@ -328,7 +332,7 @@ public final class Indexer {
 
                 path = path.substring(srcPath.length());
                 if (env.hasProjects()) {
-                    // The paths need to correspond to a project.
+                    // The paths must correspond to a project.
                     Project project;
                     if ((project = Project.getProject(path)) != null) {
                         subFiles.add(path);
@@ -353,7 +357,7 @@ public final class Indexer {
             }
 
             if (!subFiles.isEmpty() && configFilename != null) {
-                LOGGER.log(Level.WARNING, "The collection of entries to process is non empty ({0}), seems like " +
+                LOGGER.log(Level.WARNING, "The collection of paths to process is non empty ({0}), seems like " +
                         "the intention is to perform per project reindex, however the -W option is used. " +
                         "This will likely not work.", subFiles);
             }
@@ -416,12 +420,12 @@ public final class Indexer {
                 if (ignoreHistoryCacheFailures) {
                     if (historyCacheResults.values().stream().anyMatch(Optional::isPresent)) {
                         LOGGER.log(Level.INFO, "There have been history cache creation failures, " +
-                                "however --ignoreHistoryCacheFailures was used, hence ignoring them: {0}",
+                                        "however --ignoreHistoryCacheFailures was used, hence ignoring them: {0}",
                                 historyCacheResults);
                     }
                     historyCacheResults = Collections.emptyMap();
                 }
-                getInstance().doIndexerExecution(subFiles, progress, historyCacheResults);
+                throwableList = getInstance().doIndexerExecution(subFiles, progress, historyCacheResults);
             }
 
             if (reduceSegmentCount) {
@@ -436,16 +440,13 @@ public final class Indexer {
             }
         } catch (ParseException e) {
             System.err.println("** " + e.getMessage());
-            System.exit(1);
+            exitCode = 1;
         } catch (IndexerException ex) {
-            LOGGER.log(Level.SEVERE, "Exception running indexer", ex);
-            System.err.println("Exception: " + ex.getLocalizedMessage());
-            System.err.println(optParser.getUsage());
-            System.exit(1);
+            throwableList.add(ex);
         } catch (Throwable e) {
             LOGGER.log(Level.SEVERE, "Unexpected Exception", e);
             System.err.println("Exception: " + e.getLocalizedMessage());
-            System.exit(1);
+            exitCode = 1;
         } finally {
             env.shutdownSearchExecutor();
             /*
@@ -456,6 +457,22 @@ public final class Indexer {
             env.getIndexerParallelizer().bounce();
             stats.report(LOGGER, "Indexer finished", "indexer.total");
         }
+
+        if (!throwableList.isEmpty()) {
+            // The exception(s) were logged already however it does not hurt to reiterate them
+            // at the very end of indexing (sans the stack trace) since they might have been buried in the log.
+            LOGGER.log(Level.SEVERE, "Indexer finished with {0} exception{1}",
+                    new Object[]{throwableList.size(), throwableList.size() > 1 ? "s" : ""});
+            int i = 0;
+            for (Throwable throwable : throwableList) {
+                LOGGER.log(Level.SEVERE, "{0}: {1}", new Object[]{++i, throwable.getLocalizedMessage()});
+            }
+            exitCode = 1;
+        } else {
+            LOGGER.log(Level.INFO, "Indexer finished with success");
+        }
+
+        System.exit(exitCode);
     }
 
     /**
@@ -1171,6 +1188,7 @@ public final class Indexer {
         }
     }
 
+    @VisibleForTesting
     public void doIndexerExecution(List<String> subFiles, IndexChangedListener progress) throws IOException {
         doIndexerExecution(subFiles, progress, Collections.emptyMap());
     }
@@ -1182,26 +1200,29 @@ public final class Indexer {
      *
      * @param subFiles if not {@code null}, index just some subdirectories
      * @param progress if not {@code null}, an object to receive notifications as indexer progress is made
+     * @param historyCacheResults per repository results of history cache update
+     * @return list of {@link Throwable} objects, can be empty (in which case the overall indexing was successful)
      * @throws IOException if I/O exception occurred
      */
-    public void doIndexerExecution(@Nullable List<String> subFiles, @Nullable IndexChangedListener progress,
+    public List<Throwable> doIndexerExecution(@Nullable List<String> subFiles, @Nullable IndexChangedListener progress,
                                    Map<Repository, Optional<Exception>> historyCacheResults) throws IOException {
 
         Statistics elapsed = new Statistics();
         LOGGER.info("Starting indexing");
 
+        final List<Throwable> throwableList = new ArrayList<>();
         RuntimeEnvironment env = RuntimeEnvironment.getInstance();
         try (IndexerParallelizer parallelizer = env.getIndexerParallelizer()) {
             final CountDownLatch latch;
             if (subFiles == null || subFiles.isEmpty()) {
-                latch = IndexDatabase.updateAll(progress, historyCacheResults);
+                throwableList.addAll(IndexDatabase.updateAll(progress, historyCacheResults));
             } else {
                 List<IndexDatabase> dbs = new ArrayList<>();
 
                 for (String path : subFiles) {
                     Project project = Project.getProject(path);
                     if (project == null && env.hasProjects()) {
-                        LOGGER.log(Level.WARNING, "Could not find a project for \"{0}\"", path);
+                        LOGGER.log(Level.WARNING, "Could not find a project for ''{0}''", path);
                     } else {
                         addIndexDatabase(path, project, dbs, historyCacheResults);
                     }
@@ -1214,26 +1235,30 @@ public final class Indexer {
                         try {
                             db.update();
                         } catch (Throwable e) {
+                            throwableList.add(e);
                             LOGGER.log(Level.SEVERE, "An error occurred while updating index", e);
                         } finally {
                             latch.countDown();
                         }
                     });
                 }
+
+                // Wait forever for the executors to finish.
+                try {
+                    LOGGER.info("Waiting for the executors to finish");
+                    latch.await();
+                } catch (InterruptedException exp) {
+                    LOGGER.log(Level.WARNING, "Received interrupt while waiting for executor to finish", exp);
+                    throwableList.add(exp);
+                }
             }
 
-            // Wait forever for the executors to finish.
-            try {
-                LOGGER.info("Waiting for the executors to finish");
-                latch.await();
-            } catch (InterruptedException exp) {
-                LOGGER.log(Level.WARNING, "Received interrupt while waiting" +
-                        " for executor to finish", exp);
-            }
             elapsed.report(LOGGER, "Done indexing data of all repositories", "indexer.repository.indexing");
         } finally {
             CtagsUtil.deleteTempFiles();
         }
+
+        return throwableList;
     }
 
     private static void addIndexDatabase(String path, Project project, List<IndexDatabase> dbs,
@@ -1269,9 +1294,9 @@ public final class Indexer {
         } catch (IOException | IllegalArgumentException ex) {
             LOGGER.log(Level.SEVERE, String.format(
                     "Failed to send configuration to %s "
-                    + "(is web application server running with opengrok deployed?)", webAppURI), ex);
+                    + "(is web application server running with OpenGrok deployed?)", webAppURI), ex);
         } catch (InterruptedException e) {
-            LOGGER.log(Level.WARNING, "interrupted while sending configuration");
+            LOGGER.log(Level.WARNING, "interrupted while sending configuration to {0}", webAppURI);
         }
         LOGGER.info("Configuration update routine done, check log output for errors.");
     }
