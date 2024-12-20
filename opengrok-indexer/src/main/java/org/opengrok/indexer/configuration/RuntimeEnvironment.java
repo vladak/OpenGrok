@@ -507,8 +507,8 @@ public final class RuntimeEnvironment {
             return maybeRelPath;
         }
 
-        throw new FileNotFoundException("Failed to resolve [" + file.getPath()
-                + "] relative to source root [" + sourceRoot + "]");
+        throw new FileNotFoundException(String.format("Failed to resolve '%s' relative to source root '%s'",
+                file.getPath(), sourceRoot));
     }
 
     /**
