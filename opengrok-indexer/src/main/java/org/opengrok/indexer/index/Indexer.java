@@ -290,30 +290,7 @@ public final class Indexer {
 
             // Check index(es) and exit. Use distinct return code upon failure.
             if (indexCheckMode.ordinal() > IndexCheck.IndexCheckMode.NO_CHECK.ordinal()) {
-                if (cfg.getDataRoot() == null || cfg.getDataRoot().isEmpty()) {
-                    System.err.println("Empty data root in configuration");
-                    System.exit(1);
-                }
-
-                try (IndexCheck indexCheck = new IndexCheck(cfg, subFileArgs)) {
-                    indexCheck.check(indexCheckMode);
-                } catch (IOException e) {
-                    // Use separate return code for cases where the index could not be read.
-                    // This avoids problems with wiping out the index based on the check.
-                    LOGGER.log(Level.WARNING, String.format("Could not perform index check for '%s'", subFileArgs), e);
-                    System.exit(2);
-                } catch (IndexCheckException e) {
-                    System.err.printf("Index check failed%n");
-                    if (!e.getFailedPaths().isEmpty()) {
-                        System.err.print("You might want to remove " + e.getFailedPaths());
-                    } else {
-                        System.err.println("with exception: " + e);
-                        e.printStackTrace(System.err);
-                    }
-                    System.exit(1);
-                }
-
-                System.exit(0);
+                checkIndexAndExit(subFileArgs);
             }
 
             if (bareConfig) {
@@ -483,6 +460,33 @@ public final class Indexer {
         }
 
         return exitCode;
+    }
+
+    private static void checkIndexAndExit(Set<String> subFileArgs) {
+        if (cfg.getDataRoot() == null || cfg.getDataRoot().isEmpty()) {
+            System.err.println("Empty data root in configuration");
+            System.exit(1);
+        }
+
+        try (IndexCheck indexCheck = new IndexCheck(cfg, subFileArgs)) {
+            indexCheck.check(indexCheckMode);
+        } catch (IOException e) {
+            // Use separate return code for cases where the index could not be read.
+            // This avoids problems with wiping out the index based on the check.
+            LOGGER.log(Level.WARNING, String.format("Could not perform index check for '%s'", subFileArgs), e);
+            System.exit(2);
+        } catch (IndexCheckException e) {
+            System.err.printf("Index check failed%n");
+            if (!e.getFailedPaths().isEmpty()) {
+                System.err.print("You might want to remove " + e.getFailedPaths());
+            } else {
+                System.err.println("with exception: " + e);
+                e.printStackTrace(System.err);
+            }
+            System.exit(1);
+        }
+
+        System.exit(0);
     }
 
     /**
