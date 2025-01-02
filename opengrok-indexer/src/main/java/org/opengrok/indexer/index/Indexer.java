@@ -302,13 +302,18 @@ public final class Indexer {
                 System.exit(0);
             }
 
+            // The indexer does not support partial reindex, unless this is a case of per project reindex.
+            if (!subFilePaths.isEmpty() && !env.isProjectsEnabled()) {
+                System.err.println("Need to have projects enabled for the extra paths specified");
+                System.exit(1);
+            }
+
             /*
-             * Add paths to directories under source root. If projects
-             * are enabled the path should correspond to a project because
-             * project path is necessary to correctly set index directory
-             * (otherwise the index files will end up in index data root
+             * Add paths to directories under source root. Each path must correspond to a project,
+             * because project path is necessary to correctly set index directory
+             * (otherwise the index files will end up in the 'index' directory directly underneath the data root
              * directory and not per project data root directory).
-             * For the check we need to have 'env' already set.
+             * For the check we need to have the 'env' variable already set.
              */
             for (String path : subFilePaths) {
                 String srcPath = env.getSourceRootPath();
@@ -318,23 +323,18 @@ public final class Indexer {
                 }
 
                 path = path.substring(srcPath.length());
-                if (env.hasProjects()) {
-                    // The paths must correspond to a project.
-                    Project project;
-                    if ((project = Project.getProject(path)) != null) {
-                        subFiles.add(path);
-                        List<RepositoryInfo> repoList = env.getProjectRepositoriesMap().get(project);
-                        if (repoList != null) {
-                            repositories.addAll(repoList.
-                                    stream().map(RepositoryInfo::getDirectoryNameRelative).collect(Collectors.toSet()));
-                        }
-                    } else {
-                        System.err.println(String.format("The path '%s' does not correspond to a project", path));
-                        System.exit(1);
+                // The paths must correspond to a project.
+                Project project;
+                if ((project = Project.getProject(path)) != null) {
+                    subFiles.add(path);
+                    List<RepositoryInfo> repoList = env.getProjectRepositoriesMap().get(project);
+                    if (repoList != null) {
+                        repositories.addAll(repoList.
+                                stream().map(RepositoryInfo::getDirectoryNameRelative).collect(Collectors.toSet()));
                     }
                 } else {
-                    // TODO: does this assume projects are enabled ?
-                    subFiles.add(path);
+                    System.err.println(String.format("The path '%s' does not correspond to a project", path));
+                    System.exit(1);
                 }
             }
 
