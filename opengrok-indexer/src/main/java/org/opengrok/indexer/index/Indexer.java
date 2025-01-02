@@ -357,12 +357,7 @@ public final class Indexer {
             // so that the 'project/indexed' messages
             // emitted during indexing do not cause validation error.
             if (addProjects && webappURI != null) {
-                try {
-                    IndexerUtil.enableProjects(webappURI);
-                } catch (Exception e) {
-                    LOGGER.log(Level.SEVERE, String.format("Couldn't notify the webapp on %s.", webappURI), e);
-                    System.err.printf("Couldn't notify the webapp on %s: %s.%n", webappURI, e.getLocalizedMessage());
-                }
+                enableProjectsInWebApp();
             }
 
             LOGGER.log(Level.INFO, "Indexer version {0} ({1}) running on Java {2} with properties: {3}",
@@ -460,6 +455,15 @@ public final class Indexer {
         }
 
         return exitCode;
+    }
+
+    private static void enableProjectsInWebApp() {
+        try {
+            IndexerUtil.enableProjects(webappURI);
+        } catch (Exception e) {
+            LOGGER.log(Level.SEVERE, String.format("Couldn't notify the webapp on %s.", webappURI), e);
+            System.err.printf("Couldn't notify the webapp on %s: %s.%n", webappURI, e.getLocalizedMessage());
+        }
     }
 
     private static void checkIndexAndExit(Set<String> subFileArgs) {
