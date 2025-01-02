@@ -471,7 +471,9 @@ public final class Indexer {
             LOGGER.log(Level.INFO, "Indexer finished with success");
         }
 
-        System.exit(exitCode);
+        if (exitCode != 0) {
+            System.exit(exitCode);
+        }
     }
 
     /**
