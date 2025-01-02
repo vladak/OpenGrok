@@ -225,7 +225,6 @@ public class IndexDatabase {
      * @param writer index writer
      * @throws IOException on error
      */
-    @VisibleForTesting
     IndexDatabase(Project project, TermsEnum uidIter, IndexWriter writer) throws IOException {
         this(project, new IndexDownArgsFactory());
         this.uidIter = uidIter;
@@ -266,7 +265,6 @@ public class IndexDatabase {
         initialize();
     }
 
-    @VisibleForTesting
     IndexDatabase(Project project) throws IOException {
         this(project, new IndexDownArgsFactory());
     }
