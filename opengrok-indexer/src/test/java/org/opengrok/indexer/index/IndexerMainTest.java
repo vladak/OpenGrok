@@ -96,8 +96,9 @@ class IndexerMainTest {
     }
 
     @Test
-    void testSubFilesWithoutProjects() {
+    void testSubFilesWithProjectsDisabled() {
         RuntimeEnvironment env = RuntimeEnvironment.getInstance();
+        env.setProjectsEnabled(false);
         String[] argv = {"-s", repository.getSourceRoot(),
                 "-d", repository.getDataRoot(), "-v", "-c", env.getCtags(), "foo"};
         assertNotEquals(0, Indexer.runMain(argv));
