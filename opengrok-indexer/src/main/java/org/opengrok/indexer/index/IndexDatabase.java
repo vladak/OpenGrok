@@ -323,11 +323,12 @@ public class IndexDatabase {
      *
      * @param listener where to signal the changes to the database
      * @param historyCacheResults map of repository to optional exception
-     * @return list of Throwable objects (can be empty)
      * @throws IOException if an error occurs
+     * @throws IndexerException if indexing failed for any reason
      */
-    static List<Throwable> updateAll(IndexChangedListener listener,
-                                    Map<Repository, Optional<Exception>> historyCacheResults) throws IOException {
+    static void updateAll(IndexChangedListener listener,
+                                    Map<Repository, Optional<Exception>> historyCacheResults)
+            throws IOException, IndexerException {
 
         RuntimeEnvironment env = RuntimeEnvironment.getInstance();
         List<IndexDatabase> dbs = new ArrayList<>();
@@ -342,7 +343,7 @@ public class IndexDatabase {
 
         IndexerParallelizer parallelizer = RuntimeEnvironment.getInstance().getIndexerParallelizer();
         CountDownLatch latch = new CountDownLatch(dbs.size());
-        List<Throwable> throwableList = new ArrayList<>();
+        IndexerException exception = new IndexerException();
         for (IndexDatabase d : dbs) {
             final IndexDatabase db = d;
             if (listener != null) {
@@ -353,7 +354,7 @@ public class IndexDatabase {
                 try {
                     db.update();
                 } catch (Throwable e) {
-                    throwableList.add(e);
+                    exception.addSuppressed(e);
                     LOGGER.log(Level.SEVERE, String.format("Problem updating index database in directory '%s': ",
                             db.indexDirectory.getDirectory()), e);
                 } finally {
@@ -364,10 +365,12 @@ public class IndexDatabase {
         try {
             latch.await();
         } catch (InterruptedException e) {
-            throwableList.add(e);
+            exception.addSuppressed(e);
         }
 
-        return throwableList;
+        if (exception.getSuppressed().length > 0) {
+            throw exception;
+        }
     }
 
     @SuppressWarnings("PMD.CollapsibleIfStatements")

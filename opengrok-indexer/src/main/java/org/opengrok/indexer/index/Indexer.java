@@ -49,7 +49,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.Scanner;
 import java.util.Set;
@@ -425,7 +424,7 @@ public final class Indexer {
                     }
                     historyCacheResults = Collections.emptyMap();
                 }
-                throwableList = getInstance().doIndexerExecution(subFiles, progress, historyCacheResults);
+                getInstance().doIndexerExecution(subFiles, progress, historyCacheResults);
             }
 
             if (reduceSegmentCount) {
@@ -1189,7 +1188,7 @@ public final class Indexer {
     }
 
     @VisibleForTesting
-    public void doIndexerExecution(List<String> subFiles, IndexChangedListener progress) throws IOException {
+    public void doIndexerExecution(List<String> subFiles, IndexChangedListener progress) throws IOException, IndexerException {
         doIndexerExecution(subFiles, progress, Collections.emptyMap());
     }
 
@@ -1201,21 +1200,21 @@ public final class Indexer {
      * @param subFiles if not {@code null}, index just some subdirectories
      * @param progress if not {@code null}, an object to receive notifications as indexer progress is made
      * @param historyCacheResults per repository results of history cache update
-     * @return list of {@link Throwable} objects, can be empty (in which case the overall indexing was successful)
      * @throws IOException if I/O exception occurred
+     * @throws IndexerException if the indexing has failed for any reason
      */
-    public List<Throwable> doIndexerExecution(@Nullable List<String> subFiles, @Nullable IndexChangedListener progress,
-                                   Map<Repository, Optional<Exception>> historyCacheResults) throws IOException {
+    public void doIndexerExecution(@Nullable List<String> subFiles, @Nullable IndexChangedListener progress,
+                                   Map<Repository, Optional<Exception>> historyCacheResults)
+            throws IOException, IndexerException {
 
         Statistics elapsed = new Statistics();
         LOGGER.info("Starting indexing");
 
-        final List<Throwable> throwableList = new ArrayList<>();
         RuntimeEnvironment env = RuntimeEnvironment.getInstance();
         try (IndexerParallelizer parallelizer = env.getIndexerParallelizer()) {
             final CountDownLatch latch;
             if (subFiles == null || subFiles.isEmpty()) {
-                throwableList.addAll(IndexDatabase.updateAll(progress, historyCacheResults));
+                IndexDatabase.updateAll(progress, historyCacheResults);
             } else {
                 List<IndexDatabase> dbs = new ArrayList<>();
 
@@ -1228,6 +1227,7 @@ public final class Indexer {
                     }
                 }
 
+                final IndexerException indexerException = new IndexerException();
                 latch = new CountDownLatch(dbs.size());
                 for (final IndexDatabase db : dbs) {
                     db.addIndexChangedListener(progress);
@@ -1235,7 +1235,7 @@ public final class Indexer {
                         try {
                             db.update();
                         } catch (Throwable e) {
-                            throwableList.add(e);
+                            indexerException.addSuppressed(e);
                             LOGGER.log(Level.SEVERE, "An error occurred while updating index", e);
                         } finally {
                             latch.countDown();
@@ -1249,7 +1249,11 @@ public final class Indexer {
                     latch.await();
                 } catch (InterruptedException exp) {
                     LOGGER.log(Level.WARNING, "Received interrupt while waiting for executor to finish", exp);
-                    throwableList.add(exp);
+                    indexerException.addSuppressed(exp);
+                }
+
+                if (indexerException.getSuppressed().length > 0) {
+                    throw indexerException;
                 }
             }
 
@@ -1257,8 +1261,6 @@ public final class Indexer {
         } finally {
             CtagsUtil.deleteTempFiles();
         }
-
-        return throwableList;
     }
 
     private static void addIndexDatabase(String path, Project project, List<IndexDatabase> dbs,
