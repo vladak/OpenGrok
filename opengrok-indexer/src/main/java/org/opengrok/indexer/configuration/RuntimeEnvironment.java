@@ -512,12 +512,10 @@ public final class RuntimeEnvironment {
     }
 
     /**
-     * Do we have any projects ?
-     *
-     * @return true if we have projects
+     * @return true if projects are enabled and there are some projects present
      */
     public boolean hasProjects() {
-        return (this.isProjectsEnabled() && getProjects().size() > 0);
+        return (this.isProjectsEnabled() && !getProjects().isEmpty());
     }
 
     /**
