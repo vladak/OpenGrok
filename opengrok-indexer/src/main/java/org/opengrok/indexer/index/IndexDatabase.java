@@ -241,7 +241,7 @@ public class IndexDatabase {
      * @param factory {@link IndexDownArgsFactory} instance
      * @throws java.io.IOException if an error occurs while creating directories
      */
-    public IndexDatabase(@NotNull Project project, IndexDownArgsFactory factory) throws IOException {
+    IndexDatabase(@NotNull Project project, IndexDownArgsFactory factory) throws IOException {
         indexDownArgsFactory = factory;
         this.project = project;
         lockFactory = NoLockFactory.INSTANCE;
@@ -257,7 +257,7 @@ public class IndexDatabase {
      * @param indexWriterConfigFactory {@link IndexWriterConfigFactory} instance
      * @throws java.io.IOException if an error occurs while creating directories
      */
-    public IndexDatabase(@NotNull Project project, IndexDownArgsFactory indexDownArgsFactory,
+    IndexDatabase(@NotNull Project project, IndexDownArgsFactory indexDownArgsFactory,
                          IndexWriterConfigFactory indexWriterConfigFactory) throws IOException {
         this.indexDownArgsFactory = indexDownArgsFactory;
         this.project = project;
