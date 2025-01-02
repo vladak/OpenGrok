@@ -392,7 +392,7 @@ public final class Indexer {
                         collect(Collectors.toSet());
             }
             Map<Repository, Optional<Exception>> historyCacheResults = getInstance().prepareIndexer(env,
-                    searchPaths, addProjects, runIndex, subFiles, new ArrayList<>(repositories));
+                    searchPaths, addProjects, runIndex, new ArrayList<>(repositories));
 
             // Set updated configuration in RuntimeEnvironment. This is called so that repositories discovered
             // in prepareIndexer() are stored in the Configuration used by RuntimeEnvironment.
@@ -1102,7 +1102,7 @@ public final class Indexer {
 
         return prepareIndexer(env,
                 searchRepositories ? Collections.singleton(env.getSourceRootPath()) : Collections.emptySet(),
-                addProjects, true, subFiles, repositories);
+                addProjects, true, repositories);
     }
 
     /**
@@ -1117,7 +1117,6 @@ public final class Indexer {
      * @param searchPaths        list of paths relative to source root in which to search for repositories
      * @param addProjects        if true, add projects
      * @param createHistoryCache create history cache flag
-     * @param subFiles           list of directories
      * @param repositories       list of repository paths relative to source root
      * @return map of repository to exception
      * @throws IndexerException indexer exception
@@ -1127,7 +1126,6 @@ public final class Indexer {
                                                                Set<String> searchPaths,
                                                                boolean addProjects,
                                                                boolean createHistoryCache,
-                                                               List<String> subFiles,
                                                                List<String> repositories) throws IndexerException, IOException {
 
         if (!env.validateUniversalCtags()) {
