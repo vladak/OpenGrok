@@ -166,8 +166,12 @@ public final class Indexer {
      *
      * @param argv argument vector
      */
-    @SuppressWarnings("PMD.UseStringBufferForStringAppends")
     public static void main(String[] argv) {
+        System.exit(runMain(argv));
+    }
+
+    @SuppressWarnings("PMD.UseStringBufferForStringAppends")
+    public static int runMain(String[] argv) {
         Statistics stats = new Statistics(); //this won't count JVM creation though
 
         Executor.registerErrorHandler();
@@ -471,9 +475,7 @@ public final class Indexer {
             LOGGER.log(Level.INFO, "Indexer finished with success");
         }
 
-        if (exitCode != 0) {
-            System.exit(exitCode);
-        }
+        return exitCode;
     }
 
     /**
