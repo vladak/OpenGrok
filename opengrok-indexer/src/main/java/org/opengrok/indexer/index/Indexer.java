@@ -170,7 +170,14 @@ public final class Indexer {
         System.exit(runMain(argv));
     }
 
+    /**
+     * The body of {@link #main(String[])}. Avoids {@code System.exit()} so that it can be used for testing
+     * without the test runner thinking the VM went away unexpectedly.
+     * @param argv argument vector passed from the wrapper
+     * @return 0 on success, positive number on error
+     */
     @SuppressWarnings("PMD.UseStringBufferForStringAppends")
+    @VisibleForTesting
     public static int runMain(String[] argv) {
         Statistics stats = new Statistics(); //this won't count JVM creation though
 
