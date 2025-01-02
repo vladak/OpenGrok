@@ -194,7 +194,7 @@ public final class Indexer {
             if (webappURI != null && !HostUtil.isReachable(webappURI, cfg.getConnectTimeout(),
                     cfg.getIndexerAuthenticationToken())) {
                 System.err.println(webappURI + " is not reachable and the -U option was specified, exiting.");
-                System.exit(1);
+                return 1;
             }
 
             /*
@@ -299,13 +299,13 @@ public final class Indexer {
 
                 getInstance().sendToConfigHost(env, webappURI);
                 writeConfigToFile(env, configFilename);
-                System.exit(0);
+                return 0;
             }
 
             // The indexer does not support partial reindex, unless this is a case of per project reindex.
             if (!subFilePaths.isEmpty() && !env.isProjectsEnabled()) {
                 System.err.println("Need to have projects enabled for the extra paths specified");
-                System.exit(1);
+                return 1;
             }
 
             /*
@@ -319,7 +319,7 @@ public final class Indexer {
                 String srcPath = env.getSourceRootPath();
                 if (srcPath == null) {
                     System.err.println("Error getting source root from environment. Exiting.");
-                    System.exit(1);
+                    return 1;
                 }
 
                 path = path.substring(srcPath.length());
@@ -334,13 +334,13 @@ public final class Indexer {
                     }
                 } else {
                     System.err.println(String.format("The path '%s' does not correspond to a project", path));
-                    System.exit(1);
+                    return 1;
                 }
             }
 
             if (!subFilePaths.isEmpty() && subFiles.isEmpty()) {
                 System.err.println("None of the paths were added, exiting");
-                System.exit(1);
+                return 1;
             }
 
             if (!subFiles.isEmpty() && configFilename != null) {
