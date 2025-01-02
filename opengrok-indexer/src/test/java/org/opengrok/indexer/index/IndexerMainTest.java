@@ -34,6 +34,7 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 
 class IndexerMainTest {
     private TestRepository repository;
@@ -92,5 +93,13 @@ class IndexerMainTest {
                 "-d", repository.getDataRoot(), "-v", "-c", env.getCtags()};
         Indexer.runMain(argv);
         checkNumberOfThreads();
+    }
+
+    @Test
+    void testSubFilesWithoutProjects() {
+        RuntimeEnvironment env = RuntimeEnvironment.getInstance();
+        String[] argv = {"-s", repository.getSourceRoot(),
+                "-d", repository.getDataRoot(), "-v", "-c", env.getCtags(), "foo"};
+        assertNotEquals(0, Indexer.runMain(argv));
     }
 }
