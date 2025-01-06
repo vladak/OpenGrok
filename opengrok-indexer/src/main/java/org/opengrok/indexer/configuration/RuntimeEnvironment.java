@@ -143,12 +143,6 @@ public final class RuntimeEnvironment {
 
     private final Set<ConfigurationChangedListener> listeners = new CopyOnWriteArraySet<>();
 
-    public List<String> getSubFiles() {
-        return subFiles;
-    }
-
-    private final List<String> subFiles = new ArrayList<>();
-
     /**
      * Maps project name to FileCollector object. This is used to pass the list of files acquired when
      * generating history cache in the first phase of indexing to the second phase of indexing.
