@@ -186,7 +186,6 @@ public class IndexDatabase {
     private PathAccepter pathAccepter;
     private AnalyzerGuru analyzerGuru;
     private File xrefDir;
-    private boolean interrupted;
     private CopyOnWriteArrayList<IndexChangedListener> listeners;
     private File dirtyFile;
     private final Object lock = new Object();
@@ -605,7 +604,6 @@ public class IndexDatabase {
                 throw new IndexerException("Indexer already running!");
             }
             running = true;
-            interrupted = false;
         }
 
         RuntimeEnvironment env = RuntimeEnvironment.getInstance();
@@ -751,7 +749,7 @@ public class IndexDatabase {
             throw finishingException;
         }
 
-        if (!isInterrupted() && isDirty()) {
+        if (isDirty()) {
             unsetDirty();
             env.setIndexTimestamp();
         }
@@ -934,9 +932,6 @@ public class IndexDatabase {
                     collect(Collectors.toList());
             LOGGER.log(Level.FINEST, "collected sorted files: {0}", paths);
             for (Path path : paths) {
-                if (isInterrupted()) {
-                    return;
-                }
                 File file = new File(sourceRoot, path.toString());
                 progress.increment();
                 //
@@ -1637,11 +1632,6 @@ public class IndexDatabase {
      */
     @VisibleForTesting
     void indexDown(File dir, String parent, IndexDownArgs args, Progress progress) throws IOException {
-
-        if (isInterrupted()) {
-            return;
-        }
-
         AcceptSymlinkRet ret = new AcceptSymlinkRet();
         if (!accept(dir, ret)) {
             handleSymlink(parent, ret);
@@ -1929,7 +1919,6 @@ public class IndexDatabase {
                 bySuccess.computeIfAbsent(work.ret, key -> new ArrayList<>()).add(work);
             }
         } catch (InterruptedException | ExecutionException e) {
-            interrupted = true; // TODO: isInterrupted() vs throw below
             int successCount = successCounter.intValue();
             double successPct = 100.0 * successCount / worksCount;
             String exmsg = String.format("%d successes (%.1f%%) after aborting parallel-indexing",
@@ -1956,12 +1945,6 @@ public class IndexDatabase {
         int numAlreadyClosed = alreadyClosedCounter.get();
         if (numAlreadyClosed > 0) {
             throw new AlreadyClosedException(String.format("count=%d", numAlreadyClosed));
-        }
-    }
-
-    private boolean isInterrupted() {
-        synchronized (lock) {
-            return interrupted;
         }
     }
 
