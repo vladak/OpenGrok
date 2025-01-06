@@ -182,7 +182,6 @@ public final class Indexer {
         Statistics stats = new Statistics(); //this won't count JVM creation though
 
         Executor.registerErrorHandler();
-        List<String> subFiles = RuntimeEnvironment.getInstance().getSubFiles();
         Set<String> subFilePaths = new HashSet<>(); // absolute paths
         Set<String> subFileArgs = new HashSet<>();  // relative to source root
         List<Throwable> throwableList = new ArrayList<>();
@@ -339,18 +338,18 @@ public final class Indexer {
                 }
             }
 
-            if (!subFilePaths.isEmpty() && subFiles.isEmpty()) {
+            if (!subFilePaths.isEmpty() && projects.isEmpty()) {
                 System.err.println("None of the paths were added, exiting");
                 return 1;
             }
 
-            if (!subFiles.isEmpty() && configFilename != null) {
+            if (!projects.isEmpty() && configFilename != null) {
                 LOGGER.log(Level.WARNING, "The collection of paths to process is non empty ({0}), seems like " +
                         "the intention is to perform per project reindex, however the -W option is used. " +
-                        "This will likely not work.", subFiles);
+                        "This will likely not work.", projects);
             }
 
-            Metrics.updateSubFiles(subFiles);
+            Metrics.updateProjects(projects);
 
             // If the webapp is running with a config that does not contain
             // 'projectsEnabled' property (case of upgrade or transition
@@ -418,7 +417,7 @@ public final class Indexer {
             writeConfigToFile(env, configFilename);
 
             // Finally, send new configuration to the web application in the case of full reindex.
-            if (webappURI != null && subFiles.isEmpty()) {
+            if (webappURI != null && projects.isEmpty()) {
                 getInstance().sendToConfigHost(env, webappURI);
             }
         } catch (ParseException e) {
