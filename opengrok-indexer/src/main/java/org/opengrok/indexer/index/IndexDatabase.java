@@ -18,7 +18,7 @@
  */
 
 /*
- * Copyright (c) 2008, 2024, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2008, 2025, Oracle and/or its affiliates. All rights reserved.
  * Portions Copyright (c) 2017, 2020, Chris Fraire <cfraire@me.com>.
  */
 package org.opengrok.indexer.index;
@@ -194,7 +194,7 @@ public class IndexDatabase {
     private boolean running;
     private boolean isCountingDeltas;
     private boolean isWithDirectoryCounts;
-    private List<String> directories;   // TODO: use single directory
+    private String directory;
     private LockFactory lockFactory;
     private final BytesRef emptyBR = new BytesRef("");
     private final Set<String> deletedUids = new HashSet<>();
@@ -240,7 +240,7 @@ public class IndexDatabase {
      * @param factory {@link IndexDownArgsFactory} instance
      * @throws java.io.IOException if an error occurs while creating directories
      */
-    IndexDatabase(@NotNull Project project, IndexDownArgsFactory factory) throws IOException {
+    IndexDatabase(Project project, IndexDownArgsFactory factory) throws IOException {
         indexDownArgsFactory = factory;
         this.project = project;
         lockFactory = NoLockFactory.INSTANCE;
@@ -395,36 +395,17 @@ public class IndexDatabase {
             listeners = new CopyOnWriteArrayList<>();
             dirtyFile = new File(indexDir, "dirty");
             dirty = dirtyFile.exists();
-            directories = new ArrayList<>();
+            if (project == null) {
+                directory = "";
+            } else {
+                directory = project.getPath();
+            }
 
             if (dirty) {
                 LOGGER.log(Level.WARNING, "Index in ''{0}'' is dirty, the last indexing was likely interrupted." +
                         " It might be worthwhile to reindex from scratch.", indexDir);
             }
         }
-    }
-
-    /**
-     * By default, the indexer will traverse all directories in the project.
-     * If you add directories with this function update will just process the specified directories.
-     *
-     * @param dir The directory to scan
-     * @return <code>true</code> if the file is added, false otherwise
-     */
-    @SuppressWarnings("PMD.UseStringBufferForStringAppends")
-    public boolean addDirectory(String dir) {
-        String directory = dir;
-        if (directory.startsWith("\\")) {
-            directory = directory.replace('\\', '/');
-        } else if (directory.charAt(0) != '/') {
-            directory = "/" + directory;
-        }
-        File file = new File(RuntimeEnvironment.getInstance().getSourceRootFile(), directory);
-        if (file.exists()) {
-            directories.add(directory);
-            return true;
-        }
-        return false;
     }
 
     private void showFileCount(String dir, IndexDownArgs args) {
@@ -642,110 +623,99 @@ public class IndexDatabase {
             writer.commit(); // to make sure index exists on the disk
             completer = new PendingFileCompleter();
 
-            // TODO: move to constructor
-            if (directories.isEmpty()) {
-                if (project == null) {
-                    directories.add("");
-                } else {
-                    directories.add(project.getPath());
-                }
+            String dir = this.directory;
+            File sourceRoot;
+            if ("".equals(dir)) {
+                sourceRoot = env.getSourceRootFile();
+            } else {
+                sourceRoot = new File(env.getSourceRootFile(), dir);
             }
 
-            // TODO: remove the cycle
-            for (String dir : directories) {
-                File sourceRoot;
-                if ("".equals(dir)) {
-                    sourceRoot = env.getSourceRootFile();
+            dir = Util.fixPathIfWindows(dir);
+
+            String startUid = Util.path2uid(dir, "");
+            reader = DirectoryReader.open(indexDirectory); // open existing index
+            setupDeletedUids();
+            countsAggregator = new NumLinesLOCAggregator();
+            settings = readAnalysisSettings();
+            if (settings == null) {
+                settings = new IndexAnalysisSettings3();
+            }
+            Terms terms = null;
+            if (reader.numDocs() > 0) {
+                terms = MultiTerms.getTerms(reader, QueryBuilder.U);
+
+                NumLinesLOCAccessor countsAccessor = new NumLinesLOCAccessor();
+                if (countsAccessor.hasStored(reader)) {
+                    isWithDirectoryCounts = true;
+                    isCountingDeltas = true;
                 } else {
-                    sourceRoot = new File(env.getSourceRootFile(), dir);
-                }
-
-                dir = Util.fixPathIfWindows(dir);
-
-                String startUid = Util.path2uid(dir, "");
-                reader = DirectoryReader.open(indexDirectory); // open existing index
-                setupDeletedUids();
-                countsAggregator = new NumLinesLOCAggregator();
-                settings = readAnalysisSettings();
-                if (settings == null) {
-                    settings = new IndexAnalysisSettings3();
-                }
-                Terms terms = null;
-                if (reader.numDocs() > 0) {
-                    terms = MultiTerms.getTerms(reader, QueryBuilder.U);
-
-                    NumLinesLOCAccessor countsAccessor = new NumLinesLOCAccessor();
-                    if (countsAccessor.hasStored(reader)) {
-                        isWithDirectoryCounts = true;
-                        isCountingDeltas = true;
-                    } else {
-                        boolean foundCounts = countsAccessor.register(countsAggregator, reader);
-                        isWithDirectoryCounts = false;
-                        isCountingDeltas = foundCounts;
-                        if (!isCountingDeltas) {
-                            LOGGER.info("Forcing reindexing to fully compute directory counts");
-                        }
-                    }
-                } else {
+                    boolean foundCounts = countsAccessor.register(countsAggregator, reader);
                     isWithDirectoryCounts = false;
-                    isCountingDeltas = false;
+                    isCountingDeltas = foundCounts;
+                    if (!isCountingDeltas) {
+                        LOGGER.info("Forcing reindexing to fully compute directory counts");
+                    }
+                }
+            } else {
+                isWithDirectoryCounts = false;
+                isCountingDeltas = false;
+            }
+
+            try {
+                if (terms != null) {
+                    uidIter = terms.iterator();
+                    // The seekCeil() is pretty important because it makes uidIter.term() to become non-null.
+                    // Various indexer methods rely on this when working with the uidIter iterator - rather
+                    // than calling uidIter.next() first thing, they check uidIter.term().
+                    TermsEnum.SeekStatus stat = uidIter.seekCeil(new BytesRef(startUid));
+                    if (stat == TermsEnum.SeekStatus.END) {
+                        uidIter = null;
+                        LOGGER.log(Level.WARNING,
+                            "Could not find a start term for {0}, empty u field?", startUid);
+                    }
                 }
 
-                try {
-                    if (terms != null) {
-                        uidIter = terms.iterator();
-                        // The seekCeil() is pretty important because it makes uidIter.term() to become non-null.
-                        // Various indexer methods rely on this when working with the uidIter iterator - rather
-                        // than calling uidIter.next() first thing, they check uidIter.term().
-                        TermsEnum.SeekStatus stat = uidIter.seekCeil(new BytesRef(startUid));
-                        if (stat == TermsEnum.SeekStatus.END) {
-                            uidIter = null;
-                            LOGGER.log(Level.WARNING,
-                                "Could not find a start term for {0}, empty u field?", startUid);
-                        }
-                    }
+                // The actual indexing happens in indexParallel(). Here we merely collect the files
+                // that need to be indexed and the files that should be removed.
+                IndexDownArgs args = indexDownArgsFactory.getIndexDownArgs();
+                boolean usedHistory = getIndexDownArgs(dir, sourceRoot, args);
 
-                    // The actual indexing happens in indexParallel(). Here we merely collect the files
-                    // that need to be indexed and the files that should be removed.
-                    IndexDownArgs args = indexDownArgsFactory.getIndexDownArgs();
-                    boolean usedHistory = getIndexDownArgs(dir, sourceRoot, args);
+                // Traverse the trailing terms. This needs to be done before indexParallel() because
+                // in some cases it can add items to the args parameter.
+                processTrailingTerms(startUid, usedHistory, args);
 
-                    // Traverse the trailing terms. This needs to be done before indexParallel() because
-                    // in some cases it can add items to the args parameter.
-                    processTrailingTerms(startUid, usedHistory, args);
+                args.curCount = 0;
+                Statistics elapsed = new Statistics();
+                LOGGER.log(Level.INFO, "Starting indexing of directory ''{0}''", dir);
+                indexParallel(dir, args);
+                elapsed.report(LOGGER, String.format("Done indexing of directory '%s'", dir),
+                        "indexer.db.directory.index");
 
-                    args.curCount = 0;
-                    Statistics elapsed = new Statistics();
-                    LOGGER.log(Level.INFO, "Starting indexing of directory ''{0}''", dir);
-                    indexParallel(dir, args);
-                    elapsed.report(LOGGER, String.format("Done indexing of directory '%s'", dir),
-                            "indexer.db.directory.index");
-
-                    /*
-                     * As a signifier that #Lines/LOC are comprehensively
-                     * stored so that later calculation is in deltas mode, we
-                     * need at least one D-document saved. For a repo with only
-                     * non-code files, however, no true #Lines/LOC will have
-                     * been saved. Subsequent re-indexing will do more work
-                     * than necessary (until a source code file is placed). We
-                     * can record zeroes for a fake file under the root to get
-                     * a D-document even for this special repo situation.
-                     *
-                     * Metrics are aggregated for directories up to the root,
-                     * so it suffices to put the fake directly under the root.
-                     */
-                    if (!isWithDirectoryCounts) {
-                        final String ROOT_FAKE_FILE = "/.OpenGrok_fake_file";
-                        countsAggregator.register(new NumLinesLOC(ROOT_FAKE_FILE, 0, 0));
-                    }
-                    NumLinesLOCAccessor countsAccessor = new NumLinesLOCAccessor();
-                    countsAccessor.store(writer, reader, countsAggregator,
-                            isWithDirectoryCounts && isCountingDeltas);
-
-                    markProjectIndexed(project);
-                } finally {
-                    reader.close();
+                /*
+                 * As a signifier that #Lines/LOC are comprehensively
+                 * stored so that later calculation is in deltas mode, we
+                 * need at least one D-document saved. For a repo with only
+                 * non-code files, however, no true #Lines/LOC will have
+                 * been saved. Subsequent re-indexing will do more work
+                 * than necessary (until a source code file is placed). We
+                 * can record zeroes for a fake file under the root to get
+                 * a D-document even for this special repo situation.
+                 *
+                 * Metrics are aggregated for directories up to the root,
+                 * so it suffices to put the fake directly under the root.
+                 */
+                if (!isWithDirectoryCounts) {
+                    final String ROOT_FAKE_FILE = "/.OpenGrok_fake_file";
+                    countsAggregator.register(new NumLinesLOC(ROOT_FAKE_FILE, 0, 0));
                 }
+                NumLinesLOCAccessor countsAccessor = new NumLinesLOCAccessor();
+                countsAccessor.store(writer, reader, countsAggregator,
+                        isWithDirectoryCounts && isCountingDeltas);
+
+                markProjectIndexed(project);
+            } finally {
+                reader.close();
             }
 
             // The RuntimeException thrown from the block above can prevent the writing from completing.

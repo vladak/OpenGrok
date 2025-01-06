@@ -18,7 +18,7 @@
  */
 
 /*
- * Copyright (c) 2005, 2024, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2005, 2025, Oracle and/or its affiliates. All rights reserved.
  * Portions Copyright (c) 2011, Jens Elkner.
  * Portions Copyright (c) 2017, 2020, Chris Fraire <cfraire@me.com>.
  */
@@ -315,6 +315,7 @@ public final class Indexer {
              * directory and not per project data root directory).
              * For the check we need to have the 'env' variable already set.
              */
+            Set<Project> projects = new HashSet<>();
             for (String path : subFilePaths) {
                 String srcPath = env.getSourceRootPath();
                 if (srcPath == null) {
@@ -326,7 +327,7 @@ public final class Indexer {
                 // The paths must correspond to a project.
                 Project project;
                 if ((project = Project.getProject(path)) != null) {
-                    subFiles.add(path);
+                    projects.add(project);
                     List<RepositoryInfo> repoList = env.getProjectRepositoriesMap().get(project);
                     if (repoList != null) {
                         repositories.addAll(repoList.
@@ -407,7 +408,7 @@ public final class Indexer {
                     }
                     historyCacheResults = Collections.emptyMap();
                 }
-                getInstance().doIndexerExecution(subFiles, progress, historyCacheResults);
+                getInstance().doIndexerExecution(projects, progress, historyCacheResults);
             }
 
             if (reduceSegmentCount) {
@@ -1205,8 +1206,8 @@ public final class Indexer {
     }
 
     @VisibleForTesting
-    public void doIndexerExecution(List<String> subFiles, IndexChangedListener progress) throws IOException, IndexerException {
-        doIndexerExecution(subFiles, progress, Collections.emptyMap());
+    public void doIndexerExecution(Set<Project> projects, IndexChangedListener progress) throws IOException, IndexerException {
+        doIndexerExecution(projects, progress, Collections.emptyMap());
     }
 
     /**
@@ -1214,14 +1215,13 @@ public final class Indexer {
      * by passing source code files through {@code ctags}, generating xrefs
      * and storing data from the source files in the index (along with history, if any).
      *
-     * @param subFiles if not {@code null}, index just projects specified by the directories
+     * @param projects if not {@code null}, index just the projects specified
      * @param progress if not {@code null}, an object to receive notifications as indexer progress is made
      * @param historyCacheResults per repository results of history cache update
      * @throws IOException if I/O exception occurred
      * @throws IndexerException if the indexing has failed for any reason
      */
-    // TODO: replace subFiles with Set<Project> (to avoid multiple projects to be present)
-    public void doIndexerExecution(@Nullable List<String> subFiles, @Nullable IndexChangedListener progress,
+    public void doIndexerExecution(@Nullable Set<Project> projects, @Nullable IndexChangedListener progress,
                                    Map<Repository, Optional<Exception>> historyCacheResults)
             throws IOException, IndexerException {
 
@@ -1231,23 +1231,13 @@ public final class Indexer {
         RuntimeEnvironment env = RuntimeEnvironment.getInstance();
         try (IndexerParallelizer parallelizer = env.getIndexerParallelizer()) {
             final CountDownLatch latch;
-            if (subFiles == null || subFiles.isEmpty()) {
+            if (projects == null || projects.isEmpty()) {
                 IndexDatabase.updateAll(progress, historyCacheResults);
             } else {
-                // Setup with projects enabled is assumed here. The below project existence check doubles
-                // the check performed in main().
+                // Setup with projects enabled is assumed here.
                 List<IndexDatabase> dbs = new ArrayList<>();
-                for (String path : subFiles) {
-                    Project project = Project.getProject(path);
-                    if (project == null) {
-                        throw new IndexerException(String.format("Could not find a project for '%s'", path));
-                    } else {
-                        // TODO: if multiple paths corresponding to the same project are added, this would result
-                        //       in the IndexDatabase object having multiple directories
-                        // addIndexDatabase() will reuse the IndexDatabase object for given project in case
-                        // the project was specified multiple times.
-                        addIndexDatabase(path, project, dbs, historyCacheResults);
-                    }
+                for (Project project : projects) {
+                    addIndexDatabase(project, dbs, historyCacheResults);
                 }
 
                 final IndexerException indexerException = new IndexerException();
@@ -1286,30 +1276,15 @@ public final class Indexer {
         }
     }
 
-    private static void addIndexDatabase(String path, Project project, List<IndexDatabase> dbs,
+    private static void addIndexDatabase(Project project, List<IndexDatabase> dbs,
                                          Map<Repository, Optional<Exception>> historyCacheResults) throws IOException {
         IndexDatabase db;
         if (project == null) {
             db = new IndexDatabase();
+            IndexDatabase.addIndexDatabase(db, dbs, historyCacheResults);
         } else {
             db = new IndexDatabase(project);
-        }
-        // TODO: this this compare IndexDatabase objects ?
-        int idx = dbs.indexOf(db);
-        if (idx != -1) {
-            db = dbs.get(idx);
-        }
-
-        if (db.addDirectory(path)) {
-            if (idx == -1) {
-                if (project == null) {
-                    IndexDatabase.addIndexDatabase(db, dbs, historyCacheResults);
-                } else {
-                    IndexDatabase.addIndexDatabaseForProject(db, project, dbs, historyCacheResults);
-                }
-            }
-        } else {
-            LOGGER.log(Level.WARNING, "Directory ''{0}'' does not exist", path);
+            IndexDatabase.addIndexDatabaseForProject(db, project, dbs, historyCacheResults);
         }
     }
 
