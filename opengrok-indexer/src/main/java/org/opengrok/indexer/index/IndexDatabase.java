@@ -194,7 +194,7 @@ public class IndexDatabase {
     private boolean running;
     private boolean isCountingDeltas;
     private boolean isWithDirectoryCounts;
-    private List<String> directories;
+    private List<String> directories;   // TODO: use single directory
     private LockFactory lockFactory;
     private final BytesRef emptyBR = new BytesRef("");
     private final Set<String> deletedUids = new HashSet<>();
@@ -331,7 +331,7 @@ public class IndexDatabase {
         RuntimeEnvironment env = RuntimeEnvironment.getInstance();
         List<IndexDatabase> dbs = new ArrayList<>();
 
-        if (env.hasProjects()) {
+        if (env.isProjectsEnabled()) {
             for (Project project : env.getProjectList()) {
                 addIndexDatabaseForProject(null, project, dbs, historyCacheResults);
             }
@@ -642,6 +642,7 @@ public class IndexDatabase {
             writer.commit(); // to make sure index exists on the disk
             completer = new PendingFileCompleter();
 
+            // TODO: move to constructor
             if (directories.isEmpty()) {
                 if (project == null) {
                     directories.add("");
@@ -650,6 +651,7 @@ public class IndexDatabase {
                 }
             }
 
+            // TODO: remove the cycle
             for (String dir : directories) {
                 File sourceRoot;
                 if ("".equals(dir)) {

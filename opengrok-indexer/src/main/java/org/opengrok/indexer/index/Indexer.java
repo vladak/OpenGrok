@@ -1211,15 +1211,16 @@ public final class Indexer {
 
     /**
      * This is the second phase of the indexer which generates Lucene index
-     * by passing source code files through ctags, generating xrefs
+     * by passing source code files through {@code ctags}, generating xrefs
      * and storing data from the source files in the index (along with history, if any).
      *
-     * @param subFiles if not {@code null}, index just some subdirectories
+     * @param subFiles if not {@code null}, index just projects specified by the directories
      * @param progress if not {@code null}, an object to receive notifications as indexer progress is made
      * @param historyCacheResults per repository results of history cache update
      * @throws IOException if I/O exception occurred
      * @throws IndexerException if the indexing has failed for any reason
      */
+    // TODO: replace subFiles with Set<Project> (to avoid multiple projects to be present)
     public void doIndexerExecution(@Nullable List<String> subFiles, @Nullable IndexChangedListener progress,
                                    Map<Repository, Optional<Exception>> historyCacheResults)
             throws IOException, IndexerException {
@@ -1233,13 +1234,18 @@ public final class Indexer {
             if (subFiles == null || subFiles.isEmpty()) {
                 IndexDatabase.updateAll(progress, historyCacheResults);
             } else {
+                // Setup with projects enabled is assumed here. The below project existence check doubles
+                // the check performed in main().
                 List<IndexDatabase> dbs = new ArrayList<>();
-
                 for (String path : subFiles) {
                     Project project = Project.getProject(path);
-                    if (project == null && env.hasProjects()) {
-                        LOGGER.log(Level.WARNING, "Could not find a project for ''{0}''", path);
+                    if (project == null) {
+                        throw new IndexerException(String.format("Could not find a project for '%s'", path));
                     } else {
+                        // TODO: if multiple paths corresponding to the same project are added, this would result
+                        //       in the IndexDatabase object having multiple directories
+                        // addIndexDatabase() will reuse the IndexDatabase object for given project in case
+                        // the project was specified multiple times.
                         addIndexDatabase(path, project, dbs, historyCacheResults);
                     }
                 }
@@ -1288,6 +1294,7 @@ public final class Indexer {
         } else {
             db = new IndexDatabase(project);
         }
+        // TODO: this this compare IndexDatabase objects ?
         int idx = dbs.indexOf(db);
         if (idx != -1) {
             db = dbs.get(idx);
