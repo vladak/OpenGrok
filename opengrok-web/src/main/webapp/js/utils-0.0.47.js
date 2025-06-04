@@ -259,23 +259,33 @@
             options: {},
             bindClickHandler: function() {
                 $(inner.format(inner.options.clickSelector, {parent: inner.options.parent})).click(function (e) {
-                    if(e.shiftKey) {
-                        // shift pressed
-                        const val = inner.toInt($(this).attr("name"));
-                        if (!val) {
-                            return false;
-                        }
-
-                        const l = inner.getLinesParts(window.location.hash);
-
-                        if (l.length == 2) {
-                            window.location.hash = "#" + Math.min(l[0], val) + "-" + Math.max(val, l[1]);
-                        } else if (l.length == 1) {
-                            window.location.hash = "#" + Math.min(l[0], val) + "-" + Math.max(l[0], val);
-                        }
+                    let lines = $(this).attr("name")
+                    const val = inner.toInt(lines);
+                    if (!val) {
                         return false;
                     }
-                    return true;
+
+                    if (e.shiftKey) {
+                        // shift pressed
+                        const l = inner.getLinesParts(window.location.hash);
+
+                        if (l.length === 2) {
+                            lines = Math.min(l[0], val) + "-" + Math.max(val, l[1]);
+                            window.location.hash = "#" + lines;
+                        } else if (l.length === 1) {
+                            lines = Math.min(l[0], val) + "-" + Math.max(l[0], val);
+                            window.location.hash = "#" + lines;
+                        }
+                    } else {
+                        // TODO: isn't this supposed to be updated automatically ?
+                        window.location.hash = lines;
+                    }
+
+                    let link = window.location.search;
+                    link = setParameter(link, "h", lines);
+                    window.location.search = link;
+
+                    return !e.shiftKey;  // TODO: what does the return value influence ?
                 });
             },
 
@@ -2024,14 +2034,6 @@ function get_annotations() {
     let link = window.location.pathname + "?a=true";
     if (document.rev && document.rev()) {
         link += "&r=" + encodeURIComponent(document.rev());
-    }
-    if (window.location.hash) {
-        // If a line is highlighted when "annotate" is clicked, we want to
-        // preserve the highlighting, but we don't want the page to scroll
-        // to the highlighted line. So put the line number in a URL parameter
-        // instead of in the hash.
-        link += "&h=";
-        link += window.location.hash.substring(1, window.location.hash.length);
     }
     window.location = link;
 }
