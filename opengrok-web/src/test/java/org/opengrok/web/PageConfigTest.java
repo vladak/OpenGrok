@@ -1047,15 +1047,13 @@ class PageConfigTest {
         assertFalse(cfg.isUnreadable());
     }
 
-    // File.setReadable() does not change the behavior of File.canRead() on Windows.
-    @EnabledOnOs({OS.LINUX, OS.MAC, OS.SOLARIS, OS.AIX, OS.OTHER})
     @Test
     void testIsUnreadableTrue() {
         final String relativePath = Path.of("mercurial", "Makefile").toString();
         HttpServletRequest req = new DummyHttpServletRequest() {
             @Override
             public String getPathInfo() {
-                return relativePath;
+                return "/mercurial/Makefile";
             }
         };
 
