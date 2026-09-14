@@ -1,13 +1,12 @@
 #!/bin/bash
 
 if [[ "$RUNNER_OS" == "Linux" ]]; then
-	sudo apt-get update -qq
-	if [[ $? != 0 ]]; then
+	if ! sudo apt-get update -qq; then
 		echo "cannot update"
 		exit 1
 	fi
 
-	sudo apt-get install -qq \
+	if ! sudo apt-get install -qq \
 	    cvs \
 	    mercurial \
 	    cssc \
@@ -19,8 +18,7 @@ if [[ "$RUNNER_OS" == "Linux" ]]; then
 	    python3-venv \
 	    python3-pip \
 	    nodejs \
-	    jq
-	if [[ $? != 0 ]]; then
+	    jq; then
 		echo "cannot install extra packages"
 		exit 1
 	fi
@@ -28,8 +26,7 @@ if [[ "$RUNNER_OS" == "Linux" ]]; then
 	# Bitkeeper install failure is not critical, so exit code is not checked.
 	sudo ./dev/install-bitkeeper.sh
 
-	sudo ./dev/install-universal_ctags.sh
-	if [[ $? != 0 ]]; then
+	if ! sudo ./dev/install-universal_ctags.sh; then
 		echo "cannot install Universal ctags"
 		exit 1
 	fi
@@ -37,14 +34,12 @@ if [[ "$RUNNER_OS" == "Linux" ]]; then
 elif [[ "$RUNNER_OS" == "macOS" ]]; then
         export HOMEBREW_NO_AUTO_UPDATE=1
 
-	brew install cvs libgit2 jq autoconf automake mercurial
-	if [[ $? != 0 ]]; then
+	if ! brew install cvs libgit2 jq autoconf automake mercurial perforce; then
 		echo "cannot install extra packages"
 		exit 1
 	fi
 
-	sudo ./dev/install-universal_ctags.sh
-	if [[ $? != 0 ]]; then
+	if ! 	sudo ./dev/install-universal_ctags.sh; then
 		echo "cannot install Universal ctags"
 		exit 1
 	fi
